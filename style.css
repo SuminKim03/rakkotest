@@ -1,0 +1,693 @@
+/* ==========================================================================
+   제 1회 먼작귀 전국 랏코 박사 모의고사 (RAKKO TEST)
+   THEME: 랏코 버건디 망토 & 파르페 & 먼작귀 모의고사 수험지
+   ========================================================================== */
+
+:root {
+  --color-rakko-dark: #3b0f17;
+  --color-rakko-wine: #661a28;
+  --color-rakko-crimson: #8a2436;
+  --color-rakko-gold: #c98a2c;
+  --color-rakko-gold-light: #f7e3ba;
+  --color-parfait-pink: #f28b9b;
+  --color-bg-cream: #fbf7f0;
+  --color-bg-card: #ffffff;
+  --color-border-soft: #ebdcc9;
+  --color-text-main: #2b2325;
+  --color-text-muted: #6e6466;
+  --color-correct: #2e7d32;
+  --color-incorrect: #c62828;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-card: 0 8px 24px rgba(78, 20, 31, 0.08);
+  --shadow-hover: 0 12px 28px rgba(78, 20, 31, 0.16);
+  --font-main: 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+  --font-hand: 'Gaegu', cursive, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-bg-cream);
+  color: var(--color-text-main);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-image: 
+    radial-gradient(#e6d5bf 0.85px, transparent 0.85px),
+    radial-gradient(#e6d5bf 0.85px, var(--color-bg-cream) 0.85px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
+/* 컨테이너 */
+.app-container {
+  width: 100%;
+  max-width: 580px;
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 2rem 1.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   화면 공통 및 전환
+   -------------------------------------------------------------------------- */
+.quiz-screen {
+  display: none;
+  width: 100%;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.quiz-screen.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   1. 시작 화면 (START SCREEN)
+   -------------------------------------------------------------------------- */
+.test-paper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed var(--color-border-soft);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.hero-badge {
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+
+.badge-tag {
+  display: inline-block;
+  background: var(--color-rakko-wine);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(102, 26, 40, 0.25);
+}
+
+.main-title {
+  text-align: center;
+  font-size: clamp(1.65rem, 5.5vw, 2.15rem);
+  font-weight: 900;
+  color: var(--color-rakko-dark);
+  line-height: 1.25;
+  margin-bottom: 1.5rem;
+  word-break: keep-all;
+}
+
+.main-title .sub-lead {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-rakko-crimson);
+  margin-bottom: 0.35rem;
+}
+
+/* 랏코 아바타 카드 */
+.rakko-avatar-card {
+  background: #fdf5ea;
+  border: 1.5px solid #ebd4ba;
+  border-radius: var(--radius-md);
+  padding: 1.4rem 1.2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.avatar-image-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.rakko-main-img {
+  width: 155px;
+  height: auto;
+  max-height: 180px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(78, 20, 31, 0.15));
+  animation: floating-rakko 3s ease-in-out infinite alternate;
+}
+
+@keyframes floating-rakko {
+  from { transform: translateY(0); }
+  to { transform: translateY(-7px); }
+}
+
+.avatar-quote {
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  color: var(--color-rakko-wine);
+  font-weight: 700;
+  margin: 0;
+}
+
+.intro-desc {
+  font-size: 0.98rem;
+  color: #4a3e41;
+  text-align: center;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+  word-break: keep-all;
+}
+
+.start-action-box {
+  margin-bottom: 1.4rem;
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--color-rakko-wine);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 1.05rem 1.5rem;
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 4px 14px rgba(102, 26, 40, 0.3);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.btn-primary:hover {
+  background: var(--color-rakko-crimson);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(102, 26, 40, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  width: 100%;
+  background: #f5ede4;
+  color: var(--color-rakko-dark);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.2rem;
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #ede1d3;
+}
+
+.exam-meta-info {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   2. 문제 풀이 화면 (QUIZ SCREEN)
+   -------------------------------------------------------------------------- */
+.quiz-progress-bar-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.progress-step {
+  font-weight: 700;
+  color: var(--color-rakko-wine);
+}
+
+.progress-tip {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tip-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: #efe4d5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 8.33%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-rakko-wine), var(--color-parfait-pink));
+  border-radius: 4px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 문제 카드 */
+.question-card {
+  margin-bottom: 1.8rem;
+}
+
+.q-number-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.q-badge {
+  background: #f7ebd9;
+  color: var(--color-rakko-dark);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #ebd5b9;
+}
+
+.q-cat {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-rakko-wine);
+}
+
+.question-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-rakko-dark);
+  line-height: 1.45;
+  margin-bottom: 1.4rem;
+  word-break: keep-all;
+}
+
+/* 보기 그리드 */
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option-btn {
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 2px solid #ebded0;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.15rem;
+  font-family: var(--font-main);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  transition: all 0.18s ease;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.option-btn .opt-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #f5ebe0;
+  color: var(--color-rakko-dark);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0ceba;
+  transition: all 0.18s ease;
+}
+
+.option-btn:hover {
+  border-color: var(--color-rakko-wine);
+  background: #fdf8f4;
+  transform: translateX(3px);
+}
+
+.option-btn:hover .opt-num {
+  background: var(--color-rakko-wine);
+  color: #ffffff;
+  border-color: var(--color-rakko-wine);
+}
+
+.option-btn.selected {
+  border-color: var(--color-rakko-wine);
+  background: #fcf1f3;
+  color: var(--color-rakko-dark);
+  box-shadow: 0 0 0 1px var(--color-rakko-wine);
+}
+
+.option-btn.selected .opt-num {
+  background: var(--color-rakko-wine);
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   3. 결과 화면 (RESULT SCREEN)
+   -------------------------------------------------------------------------- */
+.result-header {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.result-badge {
+  display: inline-block;
+  background: var(--color-rakko-gold);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+}
+
+.result-title {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: var(--color-rakko-dark);
+}
+
+/* 성적표 카드 */
+.report-card {
+  background: #fdfaf6;
+  border: 2px solid #ecd8be;
+  border-radius: var(--radius-lg);
+  padding: 1.8rem 1.4rem;
+  text-align: center;
+  margin-bottom: 1.8rem;
+  position: relative;
+  box-shadow: 0 6px 16px rgba(78, 20, 31, 0.05);
+}
+
+.result-rakko-avatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.rakko-result-img {
+  width: 110px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(78, 20, 31, 0.12));
+}
+
+.score-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+}
+
+.score-number {
+  font-size: 3.8rem;
+  font-weight: 900;
+  color: var(--color-rakko-crimson);
+  line-height: 1;
+}
+
+.score-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.grade-title-box {
+  margin-bottom: 1.2rem;
+}
+
+.grade-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.grade-title {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--color-rakko-dark);
+}
+
+/* 랏코 말풍선 */
+.rakko-speech-bubble {
+  position: relative;
+  background: #ffffff;
+  border: 1.5px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.bubble-text {
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  color: var(--color-rakko-wine);
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+  word-break: keep-all;
+}
+
+/* 스탯 그리드 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  border-top: 1.5px dashed #ebd6bf;
+  padding-top: 1.2rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-rakko-dark);
+}
+
+/* 버튼 액션들 */
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2.2rem;
+}
+
+.btn-share {
+  background: #c94056;
+}
+
+.btn-share:hover {
+  background: #ae2d42;
+}
+
+/* --------------------------------------------------------------------------
+   오답 노트 & 해설 아코디언 (REVIEW LIST)
+   -------------------------------------------------------------------------- */
+.review-section {
+  border-top: 2px solid var(--color-border-soft);
+  padding-top: 1.5rem;
+}
+
+.review-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-rakko-dark);
+  margin-bottom: 1rem;
+}
+
+.badge-toggle {
+  font-size: 0.75rem;
+  background: #ede1d3;
+  color: var(--color-text-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.review-card {
+  background: #fdfcf9;
+  border: 1px solid #ebd9c5;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.15rem;
+  font-size: 0.95rem;
+}
+
+.review-card.correct {
+  border-left: 4px solid var(--color-correct);
+}
+
+.review-card.wrong {
+  border-left: 4px solid var(--color-incorrect);
+}
+
+.review-q-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.tag-correct {
+  color: var(--color-correct);
+}
+
+.tag-wrong {
+  color: var(--color-incorrect);
+}
+
+.review-q-text {
+  font-weight: 700;
+  color: var(--color-rakko-dark);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.review-answers {
+  background: #f5ede4;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.review-ans-row {
+  margin-bottom: 0.2rem;
+}
+
+.review-ans-row:last-child {
+  margin-bottom: 0;
+}
+
+.review-exp {
+  font-size: 0.88rem;
+  color: #574c4e;
+  line-height: 1.5;
+  border-top: 1px dashed #e3d2be;
+  padding-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   토스트 메시지
+   -------------------------------------------------------------------------- */
+.toast-message {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%) translateY(30px);
+  background: var(--color-rakko-dark);
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10000;
+  transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.25s ease;
+}
+
+.toast-message.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  body {
+    padding: 0.75rem 0.5rem 2rem;
+  }
+  .app-container {
+    padding: 1.5rem 1rem;
+  }
+  .main-title {
+    font-size: 1.6rem;
+  }
+  .question-text {
+    font-size: 1.15rem;
+  }
+  .option-btn {
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
