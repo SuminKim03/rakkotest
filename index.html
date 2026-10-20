@@ -149,17 +149,17 @@
           <button id="huntBtn" type="button" class="action-btn action-main">
             <span class="act-ico">⚔️</span>
             <span class="act-name">토벌 보내기</span>
-            <span class="act-sub">기력 -25 · 조개 획득</span>
+            <span class="act-sub">타이밍 베기 미니게임</span>
           </button>
           <button id="napBtn" type="button" class="action-btn">
             <span class="act-ico">💤</span>
             <span class="act-name">낮잠 재우기</span>
-            <span class="act-sub">20초 · 기력 +40</span>
+            <span id="napSub" class="act-sub">1분 · 기력 +30</span>
           </button>
           <button id="dailyBtn" type="button" class="action-btn">
             <span class="act-ico">📅</span>
             <span class="act-name">출석 도장</span>
-            <span id="dailySub" class="act-sub">하루 1번 · 🐚 +50</span>
+            <span id="dailySub" class="act-sub">하루 1번 · 연속 출석 보너스</span>
           </button>
           <button id="talkBtn" type="button" class="action-btn">
             <span class="act-ico">💬</span>
@@ -191,7 +191,80 @@
       </div>
     </section>
 
-    <!-- 3. 미니 컨텐츠: 모의고사 -->
+    <!-- 3. 토벌 미니게임 -->
+    <section id="huntScreen" class="screen">
+      <div class="top-bar">
+        <div class="lv-box">
+          <span class="q-badge">토벌</span>
+          <span id="huntTitle" class="lv-title">상대를 고르세요</span>
+        </div>
+        <div class="top-right">
+          <span id="huntHearts" class="hunt-hearts"></span>
+        </div>
+      </div>
+
+      <!-- 난이도 선택 -->
+      <div id="huntSelect">
+        <p class="panel-caption">기분이 좋을수록 베기 판정이 넓어져요. 지금 기력 <b id="huntEnergyNow">0</b> · 배부름 <b id="huntHungerNow">0</b></p>
+        <div id="foeList" class="item-list"></div>
+        <button id="huntCancel" type="button" class="btn-secondary" style="margin-top:0.9rem">숙소로 돌아가기</button>
+      </div>
+
+      <!-- 전투 -->
+      <div id="huntBattle" hidden>
+        <div id="arena" class="arena bg-field">
+          <div class="arena-rakko">
+            <div id="huntFigure" class="rakko-figure">
+              <img src="rakkopng/web/resolution.webp" alt="랏코" class="rakko-img" draggable="false">
+              <div class="acc-layer"></div>
+            </div>
+          </div>
+          <div id="foeWrap" class="foe-wrap">
+            <div class="foe-hp"><div id="foeHpFill" class="foe-hp-fill"></div></div>
+            <div id="foeBody" class="foe-body"></div>
+          </div>
+          <div id="slash" class="slash"></div>
+          <div id="arenaFx" class="fx-layer"></div>
+          <div id="judge" class="judge"></div>
+          <div id="combo" class="combo"></div>
+        </div>
+
+        <div class="timing">
+          <div id="timingTrack" class="timing-track">
+            <div id="zoneGood" class="zone zone-good"></div>
+            <div id="zonePerfect" class="zone zone-perfect"></div>
+            <div id="marker" class="marker"></div>
+          </div>
+          <p class="timing-hint">금색 구간에서 베면 <b>회심</b>(2배)! · 스페이스바 / 화면 탭도 OK</p>
+        </div>
+
+        <button id="slashBtn" type="button" class="btn-primary slash-btn">⚔️ 베기!</button>
+      </div>
+
+      <!-- 결과 -->
+      <div id="huntResult" class="hunt-result" hidden>
+        <div class="result-figure-wrap">
+          <div id="huntResultFigure" class="rakko-figure">
+            <img src="rakkopng/web/confident.webp" alt="랏코" class="rakko-img">
+            <div class="acc-layer"></div>
+          </div>
+        </div>
+        <h3 id="hrTitle" class="grade-title">토벌 성공!</h3>
+        <p id="hrLine" class="bubble-text hr-line">"...토벌 완료."</p>
+        <div class="report-stats">
+          <div class="rs-item"><span class="rs-label">회심</span><span id="hrPerfect" class="rs-val">0</span></div>
+          <div class="rs-item"><span class="rs-label">최대 콤보</span><span id="hrCombo" class="rs-val">0</span></div>
+          <div class="rs-item"><span class="rs-label">보상</span><span id="hrReward" class="rs-val">🐚 0</span></div>
+        </div>
+        <p id="hrExtra" class="reward-line"></p>
+        <div class="result-actions" style="margin-top:1rem;margin-bottom:0">
+          <button id="huntBack" type="button" class="btn-primary"><span>숙소로 돌아가기</span></button>
+          <button id="huntAgain" type="button" class="btn-secondary"><span>한 번 더 토벌</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 미니 컨텐츠: 모의고사 -->
     <section id="quizScreen" class="screen">
       <div class="quiz-progress-bar-wrap">
         <div class="progress-info">

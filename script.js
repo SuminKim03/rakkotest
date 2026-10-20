@@ -14,19 +14,19 @@
   const FACES = ['basic', 'cheer', 'confident', 'expact', 'handshake', 'hmm', 'naruhodo', 'nod', 'resolution', 'sit', 'yawn'];
 
   const ITEMS = {
-    clam:    { name: '조개 구이',      ico: '🦪', price: 10, desc: '배부름 +20',                       eff: { hunger: 20 },                face: 'nod',       line: '"...음. 바다의 맛이군."' },
-    taiyaki: { name: '단팥 붕어빵',    ico: '🐟', price: 18, desc: '배부름 +30 · 기분 +5',            eff: { hunger: 30, mood: 5 },       face: 'nod',       line: '"따끈하군. 머리부터 먹는 파다."' },
-    coffee:  { name: '설탕 듬뿍 커피', ico: '☕', price: 15, desc: '기력 +25 · 시럽 세 번 펌프',       eff: { energy: 25 },                face: 'confident', line: '"쓴 건... 아니다. 시럽을 넣었으니까."' },
+    clam:    { name: '조개 구이',      ico: '🦪', price: 8, desc: '배부름 +20',                       eff: { hunger: 20 },                face: 'nod',       line: '"...음. 바다의 맛이군."' },
+    taiyaki: { name: '단팥 붕어빵',    ico: '🐟', price: 15, desc: '배부름 +30 · 기분 +5',            eff: { hunger: 30, mood: 5 },       face: 'nod',       line: '"따끈하군. 머리부터 먹는 파다."' },
+    coffee:  { name: '설탕 듬뿍 커피', ico: '☕', price: 20, desc: '기력 +25 · 시럽 세 번 펌프',       eff: { energy: 25 },                face: 'confident', line: '"쓴 건... 아니다. 시럽을 넣었으니까."' },
     pudding: { name: '커스터드 푸딩',  ico: '🍮', price: 25, desc: '기분 +20 · 배부름 +10',           eff: { mood: 20, hunger: 10 },      face: 'cheer',     line: '"흔들흔들... 좋군."' },
-    parfait: { name: '딸기 파르페',    ico: '🍓', price: 45, desc: '배부름 +35 · 기분 +35 · 친밀도 +10', eff: { hunger: 35, mood: 35, exp: 10 }, face: 'cheer', line: '"파, 파르페...!! (미간 주름이 사라졌다)"' }
+    parfait: { name: '딸기 파르페',    ico: '🍓', price: 60, desc: '배부름 +35 · 기분 +35 · 친밀도 +10', eff: { hunger: 35, mood: 35, exp: 10 }, face: 'cheer', line: '"파, 파르페...!! (미간 주름이 사라졌다)"' }
   };
 
   const BGS = {
     room:    { name: '토벌대 숙소', price: 0,   desc: '기본으로 지내는 방',          swatch: 'repeating-linear-gradient(90deg,#fdf5ea 0 8px,#f8eddd 8px 16px)' },
-    field:   { name: '토벌 들판',   price: 120, desc: '토벌 나가기 전 몸풀기 장소',   swatch: 'linear-gradient(180deg,#fbe7c6 55%,#9fc077 55%)' },
-    sea:     { name: '바닷가',      price: 180, desc: '해달의 고향... 파도 소리',    swatch: 'linear-gradient(180deg,#cfe9f2 45%,#6fb3c5 45% 70%,#f1dfb8 70%)' },
-    parfait: { name: '파르페 가게', price: 250, desc: '꿈의 장소. 랏코 기분 최고',    swatch: 'repeating-linear-gradient(135deg,#fff4f6 0 6px,#fde6ea 6px 12px)' },
-    night:   { name: '밤하늘',      price: 320, desc: '별 보며 조용히 쉬는 밤',      swatch: 'linear-gradient(180deg,#2a2342,#4b3560)' }
+    field:   { name: '토벌 들판',   price: 250, desc: '토벌 나가기 전 몸풀기 장소',   swatch: 'linear-gradient(180deg,#fbe7c6 55%,#9fc077 55%)' },
+    sea:     { name: '바닷가',      price: 350, desc: '해달의 고향... 파도 소리',    swatch: 'linear-gradient(180deg,#cfe9f2 45%,#6fb3c5 45% 70%,#f1dfb8 70%)' },
+    parfait: { name: '파르페 가게', price: 500, desc: '꿈의 장소. 랏코 기분 최고',    swatch: 'repeating-linear-gradient(135deg,#fff4f6 0 6px,#fde6ea 6px 12px)' },
+    night:   { name: '밤하늘',      price: 650, desc: '별 보며 조용히 쉬는 밤',      swatch: 'linear-gradient(180deg,#2a2342,#4b3560)' }
   };
 
   // 표정 이미지별 머리/눈 위치 (이미지 크기 대비 %) — 옷 위치 계산용
@@ -53,52 +53,52 @@
   // face 배치: w(눈 간격 배수), dx, dy(눈 간격 배수)
   const CLOTHES = {
     bow: {
-      slot: 'head', name: '딸기 리본', price: 30, desc: '살짝 기울여 다는 핑크 리본',
+      slot: 'head', name: '딸기 리본', price: 80, desc: '살짝 기울여 다는 핑크 리본',
       place: { w: 0.4, dx: 0.24, by: 0.2, rot: 14 },
       svg: `<svg viewBox="0 0 100 64"><path d="M50 32 C38 14 12 6 8 18 C4 30 10 52 26 50 C36 49 44 40 50 32Z" fill="#f59aaa" ${SK}/><path d="M50 32 C62 14 88 6 92 18 C96 30 90 52 74 50 C64 49 56 40 50 32Z" fill="#f59aaa" ${SK}/><circle cx="24" cy="26" r="2.5" fill="#fff"/><circle cx="32" cy="38" r="2.5" fill="#fff"/><circle cx="76" cy="26" r="2.5" fill="#fff"/><circle cx="68" cy="38" r="2.5" fill="#fff"/><ellipse cx="50" cy="32" rx="9" ry="11" fill="#e8768a" ${SK}/></svg>`
     },
     flower: {
-      slot: 'head', name: '꽃 화관', price: 45, desc: '들판에서 엮은 작은 꽃들',
+      slot: 'head', name: '꽃 화관', price: 120, desc: '들판에서 엮은 작은 꽃들',
       place: { w: 0.92, dx: 0, by: 0.2, rot: 0 },
       svg: `<svg viewBox="0 0 160 46"><path d="M10 30 Q80 12 150 30" fill="none" stroke="#7a9a4a" stroke-width="5" stroke-linecap="round"/>${flower(18, 28, '#f9b8c4')}${flower(50, 20, '#fff')}${flower(80, 17, '#f59aaa')}${flower(110, 20, '#fff')}${flower(142, 28, '#f9b8c4')}</svg>`
     },
     straw: {
-      slot: 'head', name: '밀짚모자', price: 60, desc: '바닷가 산책 필수템',
+      slot: 'head', name: '밀짚모자', price: 160, desc: '바닷가 산책 필수템',
       place: { w: 1.15, dx: 0, by: 0.24, rot: -4 },
       svg: `<svg viewBox="0 0 140 70"><ellipse cx="70" cy="54" rx="66" ry="13" fill="#f3d68a" ${SK}/><path d="M32 54 C32 20 46 8 70 8 C94 8 108 20 108 54 Z" fill="#f6dd96" ${SK}/><path d="M33 40 C52 47 88 47 107 40 L108 51 C88 58 52 58 32 51Z" fill="#c94056" ${SK.replace('4', '3')}/><path d="M52 22 L56 30 M70 16 L70 26 M88 22 L84 30" stroke="#d6b260" stroke-width="3" stroke-linecap="round"/></svg>`
     },
     santa: {
-      slot: 'head', name: '산타 모자', price: 70, desc: '겨울 한정 기분',
+      slot: 'head', name: '산타 모자', price: 180, desc: '겨울 한정 기분',
       place: { w: 1.05, dx: 0.04, by: 0.3, rot: 0 },
       svg: `<svg viewBox="0 0 140 110"><path d="M24 86 C30 44 60 14 96 20 C116 24 126 40 122 58 C112 44 100 40 92 42 C104 56 112 72 116 86 Z" fill="#d94a4a" ${SK}/><circle cx="122" cy="60" r="12" fill="#fff" ${SK}/><rect x="16" y="78" width="108" height="24" rx="12" fill="#fff" ${SK}/></svg>`
     },
     viking: {
-      slot: 'head', name: '바이킹 투구', price: 90, desc: '바이킹 소드와 세트. 토벌 랭커의 품격',
+      slot: 'head', name: '바이킹 투구', price: 280, desc: '바이킹 소드와 세트. 토벌 랭커의 품격',
       place: { w: 1.2, dx: 0, by: 0.27, rot: 0 },
       svg: `<svg viewBox="0 0 160 84"><path d="M34 60 C12 56 4 34 12 12 C18 32 32 40 46 44 Z" fill="#f7ecd2" ${SK}/><path d="M126 60 C148 56 156 34 148 12 C142 32 128 40 114 44 Z" fill="#f7ecd2" ${SK}/><path d="M34 70 C34 32 54 16 80 16 C106 16 126 32 126 70 Z" fill="#c3cad2" ${SK}/><path d="M74 17 L86 17 L86 66 L74 66Z" fill="#a9b2bc" ${SK.replace('4', '3')}/><rect x="28" y="62" width="104" height="16" rx="7" fill="#8e98a3" ${SK}/><circle cx="46" cy="70" r="2.8" fill="#3b2b2b"/><circle cx="80" cy="70" r="2.8" fill="#3b2b2b"/><circle cx="114" cy="70" r="2.8" fill="#3b2b2b"/></svg>`
     },
     parfaitHat: {
-      slot: 'head', name: '파르페 모자', price: 120, desc: '머리 위에 꿈을 얹었다',
+      slot: 'head', name: '파르페 모자', price: 350, desc: '머리 위에 꿈을 얹었다',
       place: { w: 0.5, dx: 0.06, by: 0.22, rot: 6 },
       svg: `<svg viewBox="0 0 90 124"><path d="M44 30 C30 4 54 -2 58 14" fill="none" stroke="#c98a2c" stroke-width="5" stroke-linecap="round"/><path d="M14 54 C8 38 24 32 28 36 C28 24 44 20 48 28 C56 20 72 28 68 38 C80 38 80 52 74 54Z" fill="#fffaf2" ${SK}/><path d="M38 30 C30 18 44 10 50 20 C56 12 64 24 56 32 C50 38 42 36 38 30Z" fill="#e2445c" ${SK.replace('4', '3')}/><path d="M44 18 L50 12 L54 18" fill="#7a9a4a" stroke="#3b2b2b" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 54 L74 54 L62 98 L28 98Z" fill="#fff8f0" ${SK}/><path d="M19 64 L71 64 L68 76 L22 76Z" fill="#f59aaa"/><path d="M23 80 L67 80 L64 90 L26 90Z" fill="#f6dd96"/><path d="M16 54 L74 54 L62 98 L28 98Z" fill="none" ${SK}/><rect x="40" y="98" width="10" height="12" fill="#fff8f0" ${SK.replace('4', '3')}/><ellipse cx="45" cy="114" rx="20" ry="6" fill="#fff8f0" ${SK}/></svg>`
     },
     crown: {
-      slot: 'head', name: '랭커 왕관', price: 150, desc: '토벌 랭킹 1위에게 어울리는 것',
+      slot: 'head', name: '랭커 왕관', price: 500, desc: '토벌 랭킹 1위에게 어울리는 것',
       place: { w: 0.62, dx: 0, by: 0.3, rot: 0 },
       svg: `<svg viewBox="0 0 100 64"><path d="M10 56 L14 18 L32 36 L50 8 L68 36 L86 18 L90 56 Z" fill="#f2c14e" ${SK}/><rect x="10" y="46" width="80" height="13" rx="4" fill="#e0a92e" ${SK}/><circle cx="14" cy="18" r="5" fill="#e2445c" ${SK.replace('4', '2.5')}/><circle cx="50" cy="8" r="6" fill="#6aa7d8" ${SK.replace('4', '2.5')}/><circle cx="86" cy="18" r="5" fill="#e2445c" ${SK.replace('4', '2.5')}/><circle cx="50" cy="52" r="4" fill="#6aa7d8"/></svg>`
     },
     glasses: {
-      slot: 'face', name: '동그란 안경', price: 40, desc: '공부하는 선생님 느낌',
+      slot: 'face', name: '동그란 안경', price: 100, desc: '공부하는 선생님 느낌',
       place: { w: 1.95, dx: 0, dy: 0.02 },
       svg: `<svg viewBox="0 0 140 50"><circle cx="34" cy="25" r="20" fill="rgba(200,230,255,0.28)" stroke="#3b2b2b" stroke-width="4.5"/><circle cx="106" cy="25" r="20" fill="rgba(200,230,255,0.28)" stroke="#3b2b2b" stroke-width="4.5"/><path d="M54 24 Q70 14 86 24" fill="none" stroke="#3b2b2b" stroke-width="4" stroke-linecap="round"/><path d="M14 22 L2 18 M126 22 L138 18" stroke="#3b2b2b" stroke-width="4" stroke-linecap="round"/><path d="M24 16 Q30 11 38 12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`
     },
     sunglasses: {
-      slot: 'face', name: '선글라스', price: 70, desc: '"...눈부시군."',
+      slot: 'face', name: '선글라스', price: 200, desc: '"...눈부시군."',
       place: { w: 2.05, dx: 0, dy: 0.02 },
       svg: `<svg viewBox="0 0 140 50"><path d="M8 14 L60 14 C62 30 54 42 36 42 C18 42 8 32 8 14Z" fill="#2b2325" ${SK}/><path d="M80 14 L132 14 C132 32 122 42 104 42 C86 42 78 30 80 14Z" fill="#2b2325" ${SK}/><path d="M60 18 Q70 12 80 18" fill="none" ${SK}/><path d="M18 22 L30 22 M90 22 L102 22" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.8"/></svg>`
     },
     hearts: {
-      slot: 'face', name: '하트 볼스티커', price: 25, desc: '발그레한 볼 위에 콕',
+      slot: 'face', name: '하트 볼스티커', price: 60, desc: '발그레한 볼 위에 콕',
       place: { w: 2.35, dx: 0, dy: 0.24 },
       svg: `<svg viewBox="0 0 160 40">${heart(22, 20)}${heart(138, 20)}</svg>`
     }
@@ -301,12 +301,14 @@
     full: ['"...지금은 배가 부르다."', '"나중에 먹겠다."']
   };
 
-  const RATE = { hunger: 0.6, mood: 0.4, energyRegen: 0.5 }; // 분당
+  const RATE = { hunger: 0.3, mood: 0.25, energyRegen: 0.5 }; // 분당
   const OFFLINE_CAP_MIN = 8 * 60;
   const HUNT_MS = 10000;
-  const NAP_MS = 20000;
+  const NAP_MS = 60000;
+  const NAP_ENERGY = 30;
+  const NAP_COOLDOWN_MS = 10 * 60000;
   const PET_DISTANCE = 650;
-  const PET_SHELL_DAILY_CAP = 40;
+  const PET_SHELL_DAILY_CAP = 10;
 
   /* ======================================================================
      저장소 (localStorage, 실패 시 메모리)
@@ -338,10 +340,10 @@
 
   function newState() {
     return {
-      v: 1,
+      v: 2,
       created: Date.now(),
       last: Date.now(),
-      shells: 60,
+      shells: 50,
       lv: 1,
       exp: 0,
       hunger: 70,
@@ -359,7 +361,12 @@
       wear: { head: null, face: null },
       quizDay: '',
       quizCount: 0,
-      quizBest: 0
+      quizBest: 0,
+      streak: 0,
+      napReady: 0,
+      huntDay: '',
+      huntCount: 0,
+      wins: 0
     };
   }
 
@@ -380,7 +387,7 @@
   const loginForm = $('loginForm'), pwInput = $('pwInput');
   const newAccountBox = $('newAccountBox'), loginQuote = $('loginQuote');
   const room = $('room'), rakkoStage = $('rakkoStage'), rakkoImg = $('rakkoImg'), rakkoFigure = $('rakkoFigure');
-  const quizScreen = $('quizScreen'), resultScreen = $('resultScreen');
+  const quizScreen = $('quizScreen'), resultScreen = $('resultScreen'), huntScreen = $('huntScreen');
   const speech = $('speech'), speechText = $('speechText');
   const busyBanner = $('busyBanner'), busyLabel = $('busyLabel'), busyFill = $('busyFill');
   const petGauge = $('petGauge'), petFill = $('petFill'), fxLayer = $('fxLayer');
@@ -405,9 +412,17 @@
   const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
   const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  const today = () => {
+  const dayKey = (offset = 0) => {
     const d = new Date();
+    d.setDate(d.getDate() + offset);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const today = () => dayKey(0);
+  const dailyGift = (streak) => 25 + Math.min(Math.max(streak, 1) - 1, 6) * 5; // 25 ~ 55
+  const napWait = () => {
+    const ms = Math.max(0, (S.napReady || 0) - Date.now());
+    const m = Math.floor(ms / 60000), s = Math.ceil((ms % 60000) / 1000);
+    return m > 0 ? `${m}분 ${s}초` : `${s}초`;
   };
   const expNeed = (lv) => 40 + lv * 20;
   const titleOf = (lv) => TITLES.reduce((t, [min, name]) => (lv >= min ? name : t), TITLES[0][1]);
@@ -481,6 +496,7 @@
     S = state;
     session.set(h);
     const awayMin = (Date.now() - S.last) / 60000;
+    if (S.busy && S.busy.type === 'hunt') S.busy.end = 0;
     applyElapsed(Date.now());
     finishBusyIfDone(Date.now(), true);
     save(true);
@@ -493,7 +509,7 @@
     if (isNew) {
       setFace('handshake', 3000);
       say(pick(LINES.greetNew), 4000);
-      toast_('새 랏코를 맞이했어요! 🐚 60개와 간식을 챙겨줬어요');
+      toast_('새 랏코를 맞이했어요! 🐚 50개와 간식을 챙겨줬어요');
     } else if (S.busy) {
       say(S.busy.type === 'hunt' ? '"(토벌 중이다... 곧 돌아온다)"' : pick(LINES.sleeping), 3000);
     } else {
@@ -508,7 +524,7 @@
   }
 
   function showScreen(el) {
-    [loginScreen, gameScreen, quizScreen, resultScreen].forEach((s) => s.classList.remove('active'));
+    [loginScreen, gameScreen, huntScreen, quizScreen, resultScreen].forEach((s) => s.classList.remove('active'));
     el.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -532,6 +548,7 @@
     finishBusyIfDone(now, false);
     renderStats();
     renderBusy(now);
+    renderNapBtn();
     updateFace(now);
     maybeIdleLine(now);
     if (now > speechUntil && speechUntil !== 0) { speech.style.opacity = '0'; speechUntil = 0; }
@@ -611,7 +628,7 @@
       S.exp -= expNeed(S.lv);
       S.lv += 1;
       leveled = true;
-      const bonus = 20 + S.lv * 5;
+      const bonus = 10 + S.lv * 2;
       S.shells += bonus;
       toast_(`친밀도 Lv.${S.lv} 달성! 「${titleOf(S.lv)}」 · 🐚 +${bonus}`);
     }
@@ -704,7 +721,7 @@
     addExp(4);
     if (S.petDay !== today()) { S.petDay = today(); S.petShells = 0; }
     if (S.petShells < PET_SHELL_DAILY_CAP) {
-      const n = Math.min(2, PET_SHELL_DAILY_CAP - S.petShells);
+      const n = Math.min(1, PET_SHELL_DAILY_CAP - S.petShells);
       S.petShells += n;
       addShells(n, p.x, p.y - 30);
     }
@@ -780,22 +797,16 @@
      돌보기 액션
      ====================================================================== */
   $('huntBtn').addEventListener('click', () => {
-    if (S.busy) { toast_(S.busy.type === 'hunt' ? '이미 토벌 중이에요' : '낮잠 자는 중이에요'); return; }
-    if (S.energy < 25) { setFace('yawn', 2000); say('"...기력이 부족하다. 쉬어야겠군."', 2500); return; }
-    if (S.hunger < 15) { setFace('expact', 2000); say('"배가 고파서... 검이 무겁다."', 2500); return; }
-    S.energy = clamp(S.energy - 25);
-    S.hunger = clamp(S.hunger - 12);
-    S.busy = { type: 'hunt', start: Date.now(), end: Date.now() + HUNT_MS };
-    setFace('resolution', 1500);
-    say(pick(LINES.huntGo), 2500);
-    renderAll();
-    save(true);
+    if (S.busy && S.busy.type === 'nap') { toast_('낮잠 자는 중이에요. 깨면 보내주세요'); return; }
+    openHuntSelect();
   });
 
   $('napBtn').addEventListener('click', () => {
     if (S.busy) { toast_(S.busy.type === 'hunt' ? '토벌에서 돌아오면 재워주세요' : '이미 자고 있어요'); return; }
-    if (S.energy >= 95) { say('"아직 쌩쌩하다."', 2000); return; }
+    if (Date.now() < (S.napReady || 0)) { toast_(`아직 안 졸려요 · ${napWait()} 후 가능`); return; }
+    if (S.energy >= 90) { say('"아직 쌩쌩하다."', 2000); return; }
     S.busy = { type: 'nap', start: Date.now(), end: Date.now() + NAP_MS };
+    S.napReady = Date.now() + NAP_MS + NAP_COOLDOWN_MS;
     setFace('yawn', 1500);
     say(pick(LINES.nap), 2000);
     renderAll();
@@ -804,11 +815,13 @@
 
   $('dailyBtn').addEventListener('click', () => {
     if (S.daily === today()) { toast_('오늘 출석 도장은 이미 받았어요'); return; }
+    S.streak = S.daily === dayKey(-1) ? (S.streak || 0) + 1 : 1;
     S.daily = today();
-    addShells(50);
+    const gift = dailyGift(S.streak);
+    addShells(gift);
     setFace('handshake', 2000);
-    say('"오늘도 와줬군. 이건 용돈이다."', 3000);
-    toast_('출석 도장 쾅! 🐚 +50');
+    say(S.streak >= 3 ? `"${S.streak}일 연속이군. 성실한 제자다."` : '"오늘도 와줬군. 이건 용돈이다."', 3000);
+    toast_(`출석 도장 쾅! 연속 ${S.streak}일 · 🐚 +${gift}`);
     renderAll();
     save(true);
   });
@@ -830,37 +843,14 @@
     save(true);
   }
 
-  function finishHunt(silent) {
-    S.rec.hunts += 1;
-    const chance = Math.min(0.95, 0.5 + S.mood / 200);
-    const ok = Math.random() < chance;
-    let msg;
-    if (ok) {
-      const n = rand(18, 32) + S.lv * 2;
-      addShells(n);
-      addExp(15);
-      S.mood = clamp(S.mood + 5);
-      let extra = '';
-      if (Math.random() < 0.2) {
-        S.inv.clam = (S.inv.clam || 0) + 1;
-        extra = ' + 🦪 조개 구이';
-      }
-      msg = `토벌 성공! 🐚 +${n}${extra}`;
-      if (!silent) { setFace('confident', 3000); say(`"...토벌 완료. 조개 ${n}개다."`, 3500); burst('🐚', 4); }
-    } else {
-      const n = rand(4, 8);
-      addShells(n);
-      addExp(6);
-      S.mood = clamp(S.mood - 6);
-      msg = `토벌 실패... 🐚 +${n}`;
-      if (!silent) { setFace('naruhodo', 3000); say('"...나도 아직 멀었군."', 3500); }
-    }
-    toast_(silent ? `자리 비운 사이 ${msg}` : msg);
+  function finishHunt() {
+    // 예전 버전의 자동 토벌이 남아 있던 세이브: 보상 없이 귀환 처리
+    toast_('랏코가 토벌에서 돌아왔어요');
   }
 
   function finishNap(silent) {
-    S.energy = clamp(S.energy + 40);
-    S.mood = clamp(S.mood + 5);
+    S.energy = clamp(S.energy + NAP_ENERGY);
+    S.mood = clamp(S.mood + 3);
     if (!silent) { setFace('nod', 2000); say('"...잘 잤다."', 2500); }
   }
 
@@ -1107,9 +1097,9 @@
   /* ======================================================================
      미니 컨텐츠: 랏코 박사 모의고사
      ====================================================================== */
-  const QUIZ_REWARD_PER = 3;
-  const QUIZ_PERFECT_BONUS = 20;
-  const QUIZ_DAILY = 3;
+  const QUIZ_REWARD_PER = 2;
+  const QUIZ_PERFECT_BONUS = 10;
+  const QUIZ_DAILY = 1;
   let quizQs = [];
   let quizStep = 0;
   let quizAns = [];
@@ -1256,6 +1246,268 @@
     });
   }
 
+
+  /* ======================================================================
+     토벌 미니게임 (타이밍 베기)
+     ====================================================================== */
+  const foeSvg = (body, belly, opts = {}) => {
+    const sk = 'stroke="#3b2b2b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"';
+    const horns = opts.horns ? `<path d="M36 30 L30 6 L50 22Z" fill="#f7ecd2" ${sk}/><path d="M86 22 L100 4 L100 32Z" fill="#f7ecd2" ${sk}/>` : '';
+    const spikes = opts.spikes ? `<path d="M14 64 L2 58 L12 50 M108 60 L120 54 L110 46 M60 12 L64 0 L70 12" fill="none" ${sk}/>` : '';
+    const eye3 = opts.eye3 ? `<circle cx="63" cy="40" r="5" fill="#3b2b2b"/><path d="M56 32 L70 32" ${sk}/>` : '';
+    return `<svg viewBox="0 0 124 112">${horns}${spikes}
+      <path d="M18 100 C4 74 10 32 42 22 C58 8 86 10 98 30 C118 46 118 82 102 100 Z" fill="${body}" ${sk}/>
+      <path d="M36 98 C34 82 46 70 62 70 C78 70 90 82 88 98Z" fill="${belly}" stroke="none"/>
+      <path d="M40 50 L56 57" ${sk}/><circle cx="51" cy="62" r="5.5" fill="#3b2b2b"/>
+      <path d="M86 50 L70 57" ${sk}/><circle cx="75" cy="62" r="5.5" fill="#3b2b2b"/>${eye3}
+      <path d="M48 82 L54 76 L60 82 L66 76 L72 82 L78 76" fill="none" ${sk}/>
+      <path d="M30 100 L30 108 L44 108 L44 100 M82 100 L82 108 L96 108 L96 100" fill="${body}" ${sk}/>
+    </svg>`;
+  };
+
+  const FOES = {
+    easy:   { name: '꼬마 덩어리', tag: '쉬움', hp: 3, speed: 0.75, perfect: 0.13, good: 0.36, energy: 15, hunger: 8,  reward: [5, 7],   exp: 6,  drop: ['clam', 0.1],    minLv: 1, svg: foeSvg('#b9a6d6', '#d9cdeb') },
+    normal: { name: '수풀 괴물',   tag: '보통', hp: 5, speed: 1.1,  perfect: 0.10, good: 0.29, energy: 25, hunger: 12, reward: [10, 13], exp: 12, drop: ['taiyaki', 0.15], minLv: 1, svg: foeSvg('#8fb07a', '#c2d8a8', { horns: true }) },
+    hard:   { name: '거대 괴수',   tag: '어려움', hp: 7, speed: 1.45, perfect: 0.08, good: 0.24, energy: 35, hunger: 16, reward: [18, 22], exp: 20, drop: ['pudding', 0.2], minLv: 3, svg: foeSvg('#c77a8a', '#e6b3bd', { horns: true, spikes: true, eye3: true }) }
+  };
+  const FOE_CLS = { easy: 'easy', normal: 'normal', hard: 'hard' };
+  const HUNT_DAILY_FULL = 8; // 하루 8번까지 보상 100%, 이후 50%
+
+  const huntSelect = $('huntSelect'), huntBattle = $('huntBattle'), huntResult = $('huntResult');
+  const arena = $('arena'), marker = $('marker'), zoneGood = $('zoneGood'), zonePerfect = $('zonePerfect');
+  const foeWrap = $('foeWrap'), foeBody = $('foeBody'), judgeEl = $('judge'), comboEl = $('combo'), slashEl = $('slash');
+  const huntFigure = $('huntFigure');
+  let H = null;
+  let rafId = 0;
+
+  function huntsToday() { return S.huntDay === today() ? S.huntCount : 0; }
+
+  function openHuntSelect() {
+    showScreen(huntScreen);
+    huntSelect.hidden = false;
+    huntBattle.hidden = true;
+    huntResult.hidden = true;
+    $('huntTitle').textContent = '상대를 고르세요';
+    $('huntHearts').innerHTML = '';
+    $('huntEnergyNow').textContent = Math.round(S.energy);
+    $('huntHungerNow').textContent = Math.round(S.hunger);
+    const tired = huntsToday() >= HUNT_DAILY_FULL;
+    $('foeList').innerHTML = Object.entries(FOES).map(([id, f]) => {
+      let why = '';
+      if (S.lv < f.minLv) why = `Lv.${f.minLv}부터`;
+      else if (S.energy < f.energy) why = '기력 부족';
+      else if (S.hunger < f.hunger) why = '배고픔';
+      const r = tired ? f.reward.map((v) => Math.ceil(v / 2)) : f.reward;
+      return `
+        <div class="item-row foe-row">
+          <div class="item-ico">${f.svg}</div>
+          <div class="item-info">
+            <div class="item-name">${f.name}<span class="foe-tag ${FOE_CLS[id]}">${f.tag}</span></div>
+            <div class="item-desc">HP ${f.hp} · 기력 -${f.energy} · 배부름 -${f.hunger}<br>승리 시 🐚 ${r[0]}~${r[1]} + 회심 보너스</div>
+          </div>
+          <button class="item-btn" data-foe="${id}" ${why ? 'disabled' : ''}>${why || '출발'}</button>
+        </div>`;
+    }).join('') + `<p class="reward-line" style="text-align:center">오늘 토벌 ${huntsToday()}회 · ${tired ? '피곤해서 보상이 절반이에요' : `${HUNT_DAILY_FULL}회까지 보상 100%`}</p>`;
+  }
+
+  $('foeList').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b && b.dataset.foe && !b.disabled) startHunt(b.dataset.foe);
+  });
+  $('huntCancel').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
+  $('huntBack').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
+  $('huntAgain').addEventListener('click', openHuntSelect);
+
+  function setHuntFace(name) {
+    huntFigure.querySelector('img').src = IMG(name);
+    renderWear(huntFigure, name);
+  }
+
+  function startHunt(id) {
+    const f = FOES[id];
+    if (S.energy < f.energy || S.hunger < f.hunger) return;
+    S.energy = clamp(S.energy - f.energy);
+    S.hunger = clamp(S.hunger - f.hunger);
+    save(true);
+
+    const moodK = 0.85 + (S.mood / 100) * 0.3; // 기분 0 → 0.85배, 100 → 1.15배
+    H = {
+      id, f, hp: f.hp, hearts: 3, combo: 0, maxCombo: 0, perfects: 0,
+      pos: Math.random(), dir: Math.random() < 0.5 ? 1 : -1,
+      speed: f.speed, pW: f.perfect * moodK, gW: f.good * moodK, zc: 0.5,
+      lockUntil: 0, last: performance.now(), over: false
+    };
+    huntSelect.hidden = true;
+    huntResult.hidden = true;
+    huntBattle.hidden = false;
+    $('huntTitle').textContent = `${f.name} (${f.tag})`;
+    foeBody.innerHTML = f.svg;
+    foeWrap.className = 'foe-wrap';
+    foeWrap.style.right = '6%';
+    $('foeHpFill').style.width = '100%';
+    comboEl.textContent = '';
+    setHuntFace('resolution');
+    renderHearts();
+    placeZone();
+    judge('온다...!', '');
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(huntLoop);
+  }
+
+  function renderHearts() {
+    $('huntHearts').innerHTML = [0, 1, 2].map((i) => `<span class="${i < H.hearts ? '' : 'lost'}">♥</span>`).join('');
+  }
+
+  function placeZone() {
+    H.zc = 0.18 + Math.random() * 0.64;
+    zoneGood.style.left = `${(H.zc - H.gW / 2) * 100}%`;
+    zoneGood.style.width = `${H.gW * 100}%`;
+    zonePerfect.style.left = `${(H.zc - H.pW / 2) * 100}%`;
+    zonePerfect.style.width = `${H.pW * 100}%`;
+  }
+
+  function huntLoop(t) {
+    if (!H || H.over) return;
+    const dt = Math.min(0.05, (t - H.last) / 1000);
+    H.last = t;
+    H.pos += H.dir * H.speed * dt;
+    if (H.pos > 1) { H.pos = 2 - H.pos; H.dir = -1; }
+    if (H.pos < 0) { H.pos = -H.pos; H.dir = 1; }
+    marker.style.left = `${H.pos * 100}%`;
+    rafId = requestAnimationFrame(huntLoop);
+  }
+
+  function judge(text, cls) {
+    judgeEl.textContent = text;
+    judgeEl.className = 'judge';
+    void judgeEl.offsetWidth;
+    judgeEl.className = `judge show ${cls}`;
+  }
+
+  function flash(el, cls, ms) {
+    el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), ms);
+  }
+
+  function swing() {
+    if (!H || H.over || huntBattle.hidden) return;
+    const now = performance.now();
+    if (now < H.lockUntil) return;
+    H.lockUntil = now + 320;
+
+    const d = Math.abs(H.pos - H.zc);
+    const rakkoBox = huntFigure.parentElement;
+    if (d <= H.pW / 2 || d <= H.gW / 2) {
+      const perfect = d <= H.pW / 2;
+      const dmg = perfect ? 2 : 1;
+      H.hp = Math.max(0, H.hp - dmg);
+      H.combo += 1;
+      H.maxCombo = Math.max(H.maxCombo, H.combo);
+      if (perfect) H.perfects += 1;
+      judge(perfect ? '회심!!' : '베기!', perfect ? 'perfect' : '');
+      flash(rakkoBox, 'lunge', 160);
+      flash(foeWrap, 'hit', 160);
+      slashEl.classList.toggle('perfect', perfect);
+      flash(slashEl, 'show', 300);
+      const r = arena.getBoundingClientRect(), fr = foeWrap.getBoundingClientRect();
+      fxIn($('arenaFx'), `-${dmg}`, fr.left - r.left + fr.width / 2, fr.top - r.top + 10, perfect ? '#c98a2c' : '#8a2436');
+      setHuntFace(perfect ? 'confident' : 'resolution');
+      $('foeHpFill').style.width = `${(H.hp / H.f.hp) * 100}%`;
+      H.speed *= 1.06;
+      if (H.hp <= 0) { endHunt(true); return; }
+    } else {
+      H.hearts -= 1;
+      H.combo = 0;
+      judge('빗나감...', 'miss');
+      flash(foeWrap, 'attack', 220);
+      flash(rakkoBox, 'hurt', 220);
+      flash(arena, 'shake', 360);
+      setHuntFace('hmm');
+      renderHearts();
+      if (H.hearts <= 0) { endHunt(false); return; }
+    }
+    comboEl.textContent = H.combo >= 2 ? `${H.combo} 콤보` : '';
+    placeZone();
+    setTimeout(() => { if (H && !H.over) setHuntFace('resolution'); }, 450);
+  }
+
+  function fxIn(layer, text, x, y, color) {
+    const el = document.createElement('span');
+    el.className = 'fx fx-text';
+    el.textContent = text;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.color = color;
+    el.style.fontSize = '1.4rem';
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 1150);
+  }
+
+  $('slashBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
+  arena.addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.code === 'Space' || e.code === 'Enter') && huntScreen.classList.contains('active') && !huntBattle.hidden) {
+      e.preventDefault();
+      swing();
+    }
+  });
+
+  function endHunt(win) {
+    H.over = true;
+    cancelAnimationFrame(rafId);
+    if (S.huntDay !== today()) { S.huntDay = today(); S.huntCount = 0; }
+    S.huntCount += 1;
+    S.rec.hunts += 1;
+    const tired = S.huntCount > HUNT_DAILY_FULL;
+    const f = H.f;
+    let reward, extra = '';
+    if (win) {
+      S.wins = (S.wins || 0) + 1;
+      reward = rand(f.reward[0], f.reward[1]) + H.perfects;
+      if (H.hearts === 3) reward += 2;
+      if (tired) reward = Math.ceil(reward / 2);
+      addExp(f.exp);
+      S.mood = clamp(S.mood + 5);
+      if (Math.random() < f.drop[1]) {
+        S.inv[f.drop[0]] = (S.inv[f.drop[0]] || 0) + 1;
+        extra = `전리품: ${ITEMS[f.drop[0]].ico} ${ITEMS[f.drop[0]].name} (가방에 넣었어요)`;
+      }
+    } else {
+      reward = tired ? 1 : 2;
+      addExp(2);
+      S.mood = clamp(S.mood - 5);
+    }
+    addShells(reward);
+    save(true);
+
+    setTimeout(() => {
+      if (win) foeWrap.classList.add('dead');
+      setHuntFace(win ? 'cheer' : 'naruhodo');
+    }, 150);
+    setTimeout(() => {
+      huntBattle.hidden = true;
+      huntResult.hidden = false;
+      const face = win ? (H.hearts === 3 ? 'cheer' : 'confident') : 'naruhodo';
+      const fig = $('huntResultFigure');
+      fig.querySelector('img').src = IMG(face);
+      renderWear(fig, face);
+      $('hrTitle').textContent = win ? (H.hearts === 3 ? '완벽한 토벌!' : '토벌 성공!') : '토벌 실패...';
+      $('hrLine').textContent = win
+        ? (H.perfects >= 3 ? '"...이게 토벌 랭킹 1위의 검이다."' : '"...토벌 완료. 돌아가서 쉬자꾸나."')
+        : '"...나도 아직 멀었군. 다음엔 지지 않는다."';
+      $('hrPerfect').textContent = H.perfects;
+      $('hrCombo').textContent = H.maxCombo;
+      $('hrReward').textContent = `🐚 +${reward}`;
+      const notes = [];
+      if (win && H.hearts === 3) notes.push('노데미지 보너스 +2');
+      if (tired) notes.push('오늘은 피곤해서 보상 절반');
+      if (extra) notes.push(extra);
+      $('hrExtra').textContent = notes.join(' · ');
+      setFace(win ? 'confident' : 'naruhodo', 4000);
+      say(win ? `"토벌 다녀왔다. 조개 ${reward}개다."` : '"...오늘은 운이 없었군."', 4000);
+    }, 900);
+  }
+
   /* 탭 */
   document.querySelectorAll('.tab').forEach((t) => {
     t.addEventListener('click', () => switchTab(t.dataset.tab));
@@ -1279,6 +1531,14 @@
     $('shellCount').textContent = S.shells.toLocaleString('ko-KR');
   }
 
+  function renderNapBtn() {
+    if (!S) return;
+    const btn = $('napBtn'), sub = $('napSub');
+    const cd = Date.now() < (S.napReady || 0);
+    btn.disabled = !!S.busy || cd;
+    sub.textContent = S.busy && S.busy.type === 'nap' ? '쿨쿨 자는 중' : cd ? `${napWait()} 후 가능` : `1분 · 기력 +${NAP_ENERGY}`;
+  }
+
   function renderBusy(now) {
     if (!S.busy) { busyBanner.hidden = true; return; }
     busyBanner.hidden = false;
@@ -1287,7 +1547,7 @@
     const pct = clamp(((total - left) / total) * 100);
     busyFill.style.width = `${pct}%`;
     const sec = Math.ceil(left / 1000);
-    busyLabel.textContent = S.busy.type === 'hunt' ? `⚔️ 토벌 나감 · ${sec}초 후 귀환` : `💤 낮잠 중 · ${sec}초`;
+    busyLabel.textContent = S.busy.type === 'hunt' ? `⚔️ 토벌 나감 · ${sec}초 후 귀환` : `💤 낮잠 중 · ${sec}초 후 기상`;
   }
 
   function renderAll() {
@@ -1304,9 +1564,10 @@
 
     const doneToday = S.daily === today();
     $('dailyBtn').disabled = doneToday;
-    $('dailySub').textContent = doneToday ? '내일 또 받아요' : '하루 1번 · 🐚 +50';
+    const nextStreak = S.daily === dayKey(-1) ? (S.streak || 0) + 1 : 1;
+    $('dailySub').textContent = doneToday ? `연속 ${S.streak}일째 · 내일 또 받아요` : `연속 ${nextStreak}일째 · 🐚 +${dailyGift(nextStreak)}`;
     $('huntBtn').disabled = !!S.busy;
-    $('napBtn').disabled = !!S.busy;
+    renderNapBtn();
 
     $('recHunts').textContent = S.rec.hunts;
     $('recPets').textContent = S.rec.pets;

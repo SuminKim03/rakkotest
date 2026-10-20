@@ -1109,6 +1109,160 @@ button { font-family: var(--font-main); }
 
 
 /* --------------------------------------------------------------------------
+   토벌 미니게임
+   -------------------------------------------------------------------------- */
+.hunt-hearts { font-size: 1.1rem; letter-spacing: 2px; color: #e0607a; }
+.hunt-hearts .lost { color: #e3d6c8; }
+
+.foe-row .item-ico { background: #f3f0e6; }
+.foe-row .item-ico svg { width: 90%; }
+.foe-tag { display: inline-block; font-size: 0.7rem; font-weight: 800; padding: 0 6px; border-radius: 6px; margin-left: 4px; vertical-align: 2px; }
+.foe-tag.easy { background: #e6f1d8; color: #4d6b2a; }
+.foe-tag.normal { background: #f7e3ba; color: #8a5a12; }
+.foe-tag.hard { background: #f6d2d8; color: #8a2436; }
+
+.arena {
+  position: relative;
+  height: 250px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #ebd4ba;
+  overflow: hidden;
+  margin-bottom: 0.9rem;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.arena.shake { animation: arenaShake 0.35s ease; }
+@keyframes arenaShake {
+  20% { transform: translate(-6px, 2px); }
+  40% { transform: translate(5px, -2px); }
+  60% { transform: translate(-4px, 1px); }
+  80% { transform: translate(3px, 0); }
+}
+.arena-rakko {
+  position: absolute;
+  left: 6%;
+  bottom: 30px;
+  height: 140px;
+  display: flex;
+  align-items: flex-end;
+  transition: transform 0.12s ease;
+  z-index: 2;
+}
+.arena-rakko.lunge { transform: translateX(46px) rotate(4deg); }
+.arena-rakko.hurt { transform: translateX(-10px) rotate(-6deg); }
+
+.foe-wrap {
+  position: absolute;
+  bottom: 30px;
+  right: 6%;
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: right 0.35s ease, transform 0.12s ease;
+  z-index: 2;
+}
+.foe-wrap.hit { transform: translateX(14px); }
+.foe-wrap.hit .foe-body { filter: brightness(1.6) saturate(0.6); }
+.foe-wrap.attack { transform: translateX(-40px) scale(1.08); }
+.foe-wrap.dead { animation: foeDie 0.6s ease forwards; }
+@keyframes foeDie { to { transform: translateY(20px) scale(0.6); opacity: 0; } }
+.foe-body { width: 100%; animation: foeBob 1.1s ease-in-out infinite alternate; transition: filter 0.1s; }
+.foe-body svg { display: block; width: 100%; height: auto; overflow: visible; }
+@keyframes foeBob { from { transform: translateY(0) scale(1, 1); } to { transform: translateY(-5px) scale(1.03, 0.97); } }
+.foe-hp { width: 80%; height: 8px; background: rgba(255,255,255,0.75); border: 1.5px solid #3b2b2b; border-radius: 5px; overflow: hidden; margin-bottom: 6px; }
+.foe-hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #c94056, #f28b9b); transition: width 0.25s ease; }
+
+.slash {
+  position: absolute;
+  right: 12%;
+  bottom: 70px;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+  background:
+    linear-gradient(135deg, transparent 46%, #fff 47%, #fff 53%, transparent 54%);
+  filter: drop-shadow(0 0 6px #ffd98a);
+}
+.slash.show { animation: slashAnim 0.28s ease-out; }
+.slash.perfect { filter: drop-shadow(0 0 10px #f2c14e) drop-shadow(0 0 4px #f2c14e); }
+@keyframes slashAnim {
+  0% { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.2) rotate(10deg); }
+}
+.judge {
+  position: absolute;
+  top: 18px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-rakko-wine);
+  text-shadow: 0 2px 0 #fff, 0 0 8px #fff;
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.judge.show { animation: judgePop 0.7s ease-out; }
+.judge.perfect { color: #c98a2c; }
+.judge.miss { color: #6e6466; }
+@keyframes judgePop {
+  0% { opacity: 0; transform: scale(0.6); }
+  20% { opacity: 1; transform: scale(1.15); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+.combo {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-weight: 900;
+  font-size: 0.9rem;
+  color: var(--color-rakko-wine);
+  background: rgba(255,255,255,0.85);
+  border-radius: 10px;
+  padding: 1px 8px;
+  z-index: 5;
+}
+.combo:empty { display: none; }
+
+.timing { margin-bottom: 0.9rem; }
+.timing-track {
+  position: relative;
+  height: 30px;
+  background: #efe4d5;
+  border: 2px solid #e3cfb6;
+  border-radius: 15px;
+  overflow: hidden;
+}
+.zone { position: absolute; top: 0; bottom: 0; }
+.zone-good { background: #f7d9a8; }
+.zone-perfect { background: linear-gradient(180deg, #f2c14e, #e0a92e); box-shadow: 0 0 8px rgba(242, 193, 78, 0.8); }
+.marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 6px;
+  margin-left: -3px;
+  background: var(--color-rakko-dark);
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #fff;
+}
+.timing-hint { font-size: 0.76rem; color: var(--color-text-muted); text-align: center; margin-top: 0.4rem; }
+.slash-btn { font-size: 1.3rem; padding: 1.1rem; }
+.slash-btn:active { transform: scale(0.97); }
+
+.hunt-result { text-align: center; background: #fdfaf6; border: 2px solid #ecd8be; border-radius: var(--radius-lg); padding: 1.4rem 1.2rem; }
+.hunt-result .grade-title { margin-bottom: 0.4rem; }
+.hr-line { margin-bottom: 1rem; }
+
+/* --------------------------------------------------------------------------
    토스트
    -------------------------------------------------------------------------- */
 .toast-message {
