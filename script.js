@@ -1611,7 +1611,7 @@
     } else {
       reward = tired ? 1 : 2;
       addExp(2);
-      S.mood = clamp(S.mood - 8);
+      S.mood = clamp(S.mood - 12);
     }
     addShells(reward);
     save(true);
@@ -1741,15 +1741,19 @@
     const nl = Math.max(0, Math.min(2, D.lane + dir));
     if (nl !== D.lane) { D.lane = nl; D.tilt = dir * -0.08; }
   }
+  // WASD도 방향키와 똑같이 (한글 입력 상태여도 e.code는 KeyW 등으로 들어옴)
+  const KEYMAP = { ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', KeyW: 'ArrowUp', KeyS: 'ArrowDown', KeyA: 'ArrowLeft', KeyD: 'ArrowRight' };
   document.addEventListener('keydown', (e) => {
     if (!driveScreen.classList.contains('active') || $('drivePlay').hidden) return;
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+    const k = KEYMAP[e.code];
+    if (!k) return;
+    e.preventDefault();
     if (e.repeat) return;
-    if (e.code === 'ArrowUp') laneMove(-1);
-    if (e.code === 'ArrowDown') laneMove(1);
-    if (e.code in keys) keys[e.code] = true;
+    if (k === 'ArrowUp') laneMove(-1);
+    if (k === 'ArrowDown') laneMove(1);
+    if (k in keys) keys[k] = true;
   });
-  document.addEventListener('keyup', (e) => { if (e.code in keys) keys[e.code] = false; });
+  document.addEventListener('keyup', (e) => { const k = KEYMAP[e.code]; if (k && k in keys) keys[k] = false; });
   document.querySelectorAll('.pad-btn').forEach((b) => {
     const k = b.dataset.key;
     b.addEventListener('pointerdown', (e) => {
@@ -1833,9 +1837,10 @@
       } else if (D.inv <= 0) {
         D.hearts -= 1;
         D.crashes += 1;
+        S.mood = clamp(S.mood - 6); // 충돌할 때마다 바로 기분 -6
         D.inv = 1.0;
         D.speed = 0.4;
-        floatText('쿵!', carX + carW / 2, D.carY - 90, '#c62828');
+        floatText('쿵! 기분 -6', carX + carW / 2, D.carY - 90, '#c62828');
         for (let i = 0; i < 8; i++) D.parts.push({ x: o.x, y: D.lanes[o.lane] - 10, vx: (Math.random() - 0.3) * 160, vy: -Math.random() * 160, life: 0.6, c: '#9a8d88', r: 3 });
         renderDriveHearts();
         if (D.hearts <= 0) endDrive();
@@ -1967,7 +1972,7 @@
     const energy = rand(5, 10);
     const moodUp = Math.min(10, D.splashes);
     S.energy = clamp(S.energy + energy);
-    S.mood = clamp(S.mood + moodUp - D.crashes * 3);
+    S.mood = clamp(S.mood + moodUp);
     S.drives = (S.drives || 0) + 1;
     addExp(3);
     save(true);
@@ -1983,7 +1988,7 @@
       $('drDist').textContent = `${D.dist.toFixed(1)}km`;
       $('drSplash').textContent = D.splashes;
       $('drEnergy').textContent = `+${energy}`;
-      $('drExtra').textContent = `기분 ${moodUp - D.crashes * 3 >= 0 ? '+' : ''}${moodUp - D.crashes * 3} · 친밀도 +3 · 다음 드라이브는 ${driveWait()} 후`;
+      $('drExtra').textContent = `기분 ${moodUp - D.crashes * 6 >= 0 ? '+' : ''}${moodUp - D.crashes * 6} (충돌 ${D.crashes}번 × -6) · 친밀도 +3 · 다음 드라이브는 ${driveWait()} 후`;
       setFace(crashedOut ? 'naruhodo' : 'cheer', 3500);
       say(crashedOut ? '"...차는 무사하다. 아마도."' : `"드라이브 다녀왔다. 기력이 ${energy} 찼다."`, 4000);
     }, crashedOut ? 700 : 300);
