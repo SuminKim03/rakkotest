@@ -1597,6 +1597,11 @@
   window.addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
 
+  /* 주소창 끝에 남은 ? (예전 폼 제출 흔적) 지우기 */
+  if (window.location.href.endsWith('?') || window.location.search) {
+    try { history.replaceState(null, '', window.location.pathname + window.location.hash); } catch (e) { /* noop */ }
+  }
+
   /* 새로고침 시 세션 유지 */
   (function resume() {
     const h = session.get();
