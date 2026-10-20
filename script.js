@@ -447,6 +447,8 @@
      DOM
      ====================================================================== */
   const $ = (id) => document.getElementById(id);
+  // 요소가 없어도(HTML·JS 버전이 섞여도) 멈추지 않게
+  const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); else console.warn('[rakko] 요소 없음:', id); };
   const loginScreen = $('loginScreen'), gameScreen = $('gameScreen');
   const loginForm = $('loginForm'), pwInput = $('pwInput');
   const newAccountBox = $('newAccountBox'), loginQuote = $('loginQuote');
@@ -554,12 +556,12 @@
     }
   });
 
-  $('newAccountYes').addEventListener('click', () => {
+  on('newAccountYes', 'click', () => {
     if (!pendingHash) return;
     enterGame(pendingHash, newState(), true);
   });
 
-  $('newAccountNo').addEventListener('click', () => {
+  on('newAccountNo', 'click', () => {
     pendingHash = null;
     newAccountBox.hidden = true;
     loginQuote.textContent = '"...왔나. 암호를 대거라."';
@@ -581,7 +583,7 @@
     pwInput.classList.add('shake');
   }
 
-  $('logoutBtn').addEventListener('click', () => {
+  on('logoutBtn', 'click', () => {
     save(true);
     cloudQueue(true);
     cloudUnwatch();
@@ -902,12 +904,12 @@
   /* ======================================================================
      돌보기 액션
      ====================================================================== */
-  $('huntBtn').addEventListener('click', () => {
+  on('huntBtn', 'click', () => {
     if (S.busy && S.busy.type === 'nap') { toast_('낮잠 자는 중이에요. 깨면 보내주세요'); return; }
     openHuntSelect();
   });
 
-  $('napBtn').addEventListener('click', () => {
+  on('napBtn', 'click', () => {
     if (S.busy) { toast_(S.busy.type === 'hunt' ? '토벌에서 돌아오면 재워주세요' : '이미 자고 있어요'); return; }
     if (Date.now() < (S.napReady || 0)) { toast_(`아직 안 졸려요 · ${napWait()} 후 가능`); return; }
     if (S.energy >= 90) { say('"아직 쌩쌩하다."', 2000); return; }
@@ -919,7 +921,7 @@
     save(true);
   });
 
-  $('dailyBtn').addEventListener('click', () => {
+  on('dailyBtn', 'click', () => {
     if (S.daily === today()) { toast_('오늘 출석 도장은 이미 받았어요'); return; }
     S.streak = S.daily === dayKey(-1) ? (S.streak || 0) + 1 : 1;
     S.daily = today();
@@ -932,7 +934,7 @@
     save(true);
   });
 
-  $('talkBtn').addEventListener('click', () => {
+  on('talkBtn', 'click', () => {
     if (S.busy && S.busy.type === 'hunt') { toast_('랏코는 지금 토벌 나가 있어요'); return; }
     if (S.busy && S.busy.type === 'nap') { say(pick(LINES.sleeping), 2000); return; }
     setFace(pick(['naruhodo', 'confident', 'nod']), 3000);
@@ -1080,7 +1082,7 @@
     }).join('');
   }
 
-  $('shopList').addEventListener('click', (e) => {
+  on('shopList', 'click', (e) => {
     const b = e.target.closest('button');
     if (!b || b.disabled) return;
     if (b.dataset.buy) buyItem(b.dataset.buy);
@@ -1088,7 +1090,7 @@
     if (b.dataset.cloth) buyCloth(b.dataset.cloth);
     if (b.dataset.goto) switchTab(b.dataset.goto);
   });
-  $('bagList').addEventListener('click', (e) => {
+  on('bagList', 'click', (e) => {
     const b = e.target.closest('button');
     if (b && b.dataset.feed) feed(b.dataset.feed);
   });
@@ -1193,7 +1195,7 @@
     }).join('');
   }
 
-  $('panel-closet').addEventListener('click', (e) => {
+  on('panel-closet', 'click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.dataset.wear) wear(b.dataset.wear);
@@ -1234,17 +1236,17 @@
     renderQuestion();
   }
 
-  $('quizEntry').addEventListener('click', startQuiz);
-  $('retryBtn').addEventListener('click', startQuiz);
-  $('quitBtn').addEventListener('click', () => {
+  on('quizEntry', 'click', startQuiz);
+  on('retryBtn', 'click', startQuiz);
+  on('quitBtn', 'click', () => {
     showScreen(gameScreen);
     if (!S.busy) { setFace('hmm', 2000); say('"...시험 도중에 나가는 건가."', 2500); }
   });
-  $('backBtn').addEventListener('click', () => {
+  on('backBtn', 'click', () => {
     showScreen(gameScreen);
     renderAll();
   });
-  $('prevBtn').addEventListener('click', () => {
+  on('prevBtn', 'click', () => {
     if (quizStep > 0) { quizStep--; renderQuestion(); }
   });
 
@@ -1416,13 +1418,13 @@
     }).join('') + `<p class="reward-line" style="text-align:center">오늘 토벌 ${huntsToday()}회 · ${tired ? '피곤해서 보상이 절반이에요' : `${HUNT_DAILY_FULL}회까지 보상 100%`}</p>`;
   }
 
-  $('foeList').addEventListener('click', (e) => {
+  on('foeList', 'click', (e) => {
     const b = e.target.closest('button');
     if (b && b.dataset.foe && !b.disabled) startHunt(b.dataset.foe);
   });
-  $('huntCancel').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
-  $('huntBack').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
-  $('huntAgain').addEventListener('click', openHuntSelect);
+  on('huntCancel', 'click', () => { showScreen(gameScreen); renderAll(); });
+  on('huntBack', 'click', () => { showScreen(gameScreen); renderAll(); });
+  on('huntAgain', 'click', openHuntSelect);
 
   function setHuntFace(name) {
     huntFigure.querySelector('img').src = IMG(name);
@@ -1579,7 +1581,7 @@
     setTimeout(() => el.remove(), 1150);
   }
 
-  $('slashBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
+  on('slashBtn', 'pointerdown', (e) => { e.preventDefault(); swing(); });
   arena.addEventListener('pointerdown', (e) => { e.preventDefault(); swing(); });
   document.addEventListener('keydown', (e) => {
     if ((e.code === 'Space' || e.code === 'Enter') && huntScreen.classList.contains('active') && !huntBattle.hidden) {
@@ -1670,7 +1672,7 @@
     $('driveSub').textContent = S.busy && S.busy.type === 'nap' ? '자는 중' : cd ? `${driveWait()} 후 가능` : '기력 +5~10';
   }
 
-  $('driveBtn').addEventListener('click', () => {
+  on('driveBtn', 'click', () => {
     if (S.busy && S.busy.type === 'nap') { toast_('낮잠 자는 중이에요'); return; }
     if (Date.now() < (S.driveReady || 0)) { toast_(`차가 쉬는 중이에요 · ${driveWait()} 후 가능`); return; }
     showScreen(driveScreen);
@@ -1680,10 +1682,10 @@
     $('driveHearts').innerHTML = '';
     $('driveTitle').textContent = '토코토코 드라이브';
   });
-  $('driveCancel').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
-  $('driveBack').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
-  $('driveStart').addEventListener('click', startDrive);
-  $('driveAgain').addEventListener('click', startDrive);
+  on('driveCancel', 'click', () => { showScreen(gameScreen); renderAll(); });
+  on('driveBack', 'click', () => { showScreen(gameScreen); renderAll(); });
+  on('driveStart', 'click', startDrive);
+  on('driveAgain', 'click', startDrive);
 
   function sizeCanvas() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
