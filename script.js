@@ -1649,7 +1649,7 @@
      드라이브 미니게임 (방향키)
      ====================================================================== */
   const DRIVE_SEC = 45;
-  const DRIVE_COOLDOWN_MS = 3 * 60000;
+  const DRIVE_COOLDOWN_MS = 0; // 쿨타임 없음 (무제한)
   const carImg = new Image();
   carImg.src = IMG('car');
   const dc = $('driveCanvas');
@@ -1683,6 +1683,7 @@
   $('driveCancel').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
   $('driveBack').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
   $('driveStart').addEventListener('click', startDrive);
+  $('driveAgain').addEventListener('click', startDrive);
 
   function sizeCanvas() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1988,7 +1989,7 @@
       $('drDist').textContent = `${D.dist.toFixed(1)}km`;
       $('drSplash').textContent = D.splashes;
       $('drEnergy').textContent = `+${energy}`;
-      $('drExtra').textContent = `기분 ${moodUp - D.crashes * 6 >= 0 ? '+' : ''}${moodUp - D.crashes * 6} (충돌 ${D.crashes}번 × -6) · 친밀도 +3 · 다음 드라이브는 ${driveWait()} 후`;
+      $('drExtra').textContent = `기분 ${moodUp - D.crashes * 6 >= 0 ? '+' : ''}${moodUp - D.crashes * 6} (충돌 ${D.crashes}번 × -6) · 친밀도 +3`;
       setFace(crashedOut ? 'naruhodo' : 'cheer', 3500);
       say(crashedOut ? '"...차는 무사하다. 아마도."' : `"드라이브 다녀왔다. 기력이 ${energy} 찼다."`, 4000);
     }, crashedOut ? 700 : 300);
