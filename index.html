@@ -2,19 +2,16 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>제 1회 먼작귀 전국 랏코 박사 모의고사</title>
-  <meta name="description" content="토벌 랭킹 1위, 참스승이자 디저트 러버! 당신은 랏코 선생님을 얼마나 알고 계신가요? 12문항으로 측정하는 랏코력 테스트!">
-  
-  <!-- 오픈그래프 (카카오톡, 트위터 공유용) -->
-  <meta property="og:title" content="제 1회 먼작귀 전국 랏코 박사 모의고사">
-  <meta property="og:description" content="토벌 랭킹 1위 랏코 선생님에 대한 나의 지식은 몇 점일까? 지금 바로 테스트해보세요!">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>랏코 키우기</title>
+  <meta name="description" content="토벌 랭킹 1위 참스승님을 내 손으로! 쓰다듬고, 간식 주고, 토벌 보내서 조개를 모아보세요.">
+
+  <meta property="og:title" content="랏코 키우기">
+  <meta property="og:description" content="토벌 랭킹 1위 랏코 선생님을 쓰다듬고, 파르페 사주고, 토벌 보내기!">
   <meta property="og:type" content="website">
 
-  <!-- 파비콘 -->
   <link rel="icon" href="rakko_icon.webp">
 
-  <!-- 구글 폰트: Gowun Dodum, Gaegu, Noto Sans KR -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
@@ -24,12 +21,12 @@
 <body>
 
   <div class="app-container">
-    
-    <!-- 1. 시작 화면 -->
-    <section id="startScreen" class="quiz-screen active">
+
+    <!-- 1. 입장 화면 -->
+    <section id="loginScreen" class="screen active">
       <div class="test-paper-header">
-        <span class="exam-code">2026학년도 먼작귀영역 토벌학력평가</span>
-        <span class="exam-time">제한시간: 무제한 (12문항)</span>
+        <span>먼작귀 토벌대 숙소</span>
+        <span>출입 명부</span>
       </div>
 
       <div class="hero-badge">
@@ -37,48 +34,170 @@
       </div>
 
       <h1 class="main-title">
-        <span class="sub-lead">토벌 랭킹 1위 참스승님 탐구영역</span>
-        전국 랏코 박사 모의고사
+        <span class="sub-lead">토벌 랭킹 1위 참스승님과 함께</span>
+        랏코 키우기
       </h1>
 
       <div class="rakko-avatar-card">
         <div class="avatar-image-wrap">
-          <img src="rakko_icon.webp" onerror="this.src='https://chiikawa.toho-movie.jp/atm/img/ch_icon_06.webp'" alt="토벌 랭킹 1위 랏코 선생님" class="rakko-main-img">
+          <img src="rakkopng/web/handshake.webp" alt="악수를 청하는 랏코" class="rakko-main-img">
         </div>
-        <p class="avatar-quote">
-          "온다...! 준비는 되었나, 제자여."
-        </p>
+        <p id="loginQuote" class="avatar-quote">"...왔나. 암호를 대거라."</p>
       </div>
 
-      <div class="intro-desc">
-        <p>
-          압도적인 강함 뒤에 숨겨진 <strong>딸기 파르페 사랑</strong>과 <strong>치명적인 귀여움</strong>까지!<br>
-          원작 만화와 애니메이션 공식 에피소드로 검증하는 <strong>진짜 랏코 팬 인증 시험</strong>에 도전하세요.
-        </p>
-      </div>
-
-      <div class="start-action-box">
-        <button id="startBtn" type="button" class="btn-primary">
-          <span class="btn-label">시험 시작하기</span>
+      <form id="loginForm" class="login-form" autocomplete="off">
+        <label for="pwInput" class="field-label">비밀번호</label>
+        <input id="pwInput" class="pw-input" type="password" inputmode="text" placeholder="나만의 비밀번호" maxlength="40" required>
+        <button type="submit" class="btn-primary">
+          <span class="btn-label">숙소 입장하기</span>
           <span class="btn-arrow">→</span>
         </button>
+      </form>
+
+      <div id="newAccountBox" class="new-account-box" hidden>
+        <p class="new-account-text">처음 보는 비밀번호예요.<br><strong>이 비밀번호로 새 랏코를 맞이할까요?</strong></p>
+        <div class="row-actions">
+          <button id="newAccountYes" type="button" class="btn-primary btn-sm">새 랏코 맞이하기</button>
+          <button id="newAccountNo" type="button" class="btn-secondary btn-sm">다시 입력</button>
+        </div>
       </div>
 
       <div class="exam-meta-info">
-        <span>문항수: 12문제</span>
+        <span>비밀번호가 곧 계정이에요</span>
         <span>•</span>
-        <span>출제범위: 먼작귀 코믹스 / 애니 / 극장판 / 작가 공인 설정</span>
+        <span>이 브라우저에 저장돼요</span>
       </div>
     </section>
 
-    <!-- 2. 퀴즈 진행 화면 -->
-    <section id="quizScreen" class="quiz-screen">
-      <!-- 상단 시험 진행 바 -->
+    <!-- 2. 키우기 화면 -->
+    <section id="gameScreen" class="screen">
+      <div class="top-bar">
+        <div class="lv-box">
+          <span id="lvBadge" class="q-badge">Lv.1</span>
+          <span id="lvTitle" class="lv-title">새내기 먼작귀</span>
+        </div>
+        <div class="top-right">
+          <span class="shell-chip" title="보유 조개"><span class="shell-ico">🐚</span><span id="shellCount">0</span></span>
+          <button id="logoutBtn" type="button" class="icon-btn" aria-label="나가기" title="나가기">⏏</button>
+        </div>
+      </div>
+
+      <div class="exp-wrap">
+        <div class="progress-track"><div id="expFill" class="progress-fill"></div></div>
+        <span id="expText" class="exp-text">0 / 50</span>
+      </div>
+
+      <!-- 랏코 방 -->
+      <div id="room" class="room bg-room">
+        <div id="speech" class="speech">
+          <p id="speechText">"온다...!"</p>
+        </div>
+
+        <div id="busyBanner" class="busy-banner" hidden>
+          <span id="busyLabel">토벌 중...</span>
+          <div class="busy-track"><div id="busyFill" class="busy-fill"></div></div>
+        </div>
+
+        <div id="rakkoStage" class="rakko-stage">
+          <div id="rakkoFigure" class="rakko-figure">
+            <img id="rakkoImg" src="rakkopng/web/basic.webp" alt="랏코" class="rakko-img" draggable="false">
+            <div class="acc-layer"></div>
+          </div>
+        </div>
+        <div class="rakko-shadow"></div>
+
+        <div id="petGauge" class="pet-gauge"><div id="petFill" class="pet-fill"></div></div>
+        <div id="fxLayer" class="fx-layer"></div>
+        <p class="room-hint">톡 찌르거나, 꾹 누른 채 문질러서 쓰다듬어 보세요</p>
+      </div>
+
+      <!-- 상태 -->
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-head"><span class="stat-label">배부름</span><span id="hungerVal" class="stat-val">0</span></div>
+          <div class="mini-track"><div id="hungerFill" class="mini-fill fill-hunger"></div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-head"><span class="stat-label">기분</span><span id="moodVal" class="stat-val">0</span></div>
+          <div class="mini-track"><div id="moodFill" class="mini-fill fill-mood"></div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-head"><span class="stat-label">기력</span><span id="energyVal" class="stat-val">0</span></div>
+          <div class="mini-track"><div id="energyFill" class="mini-fill fill-energy"></div></div>
+        </div>
+      </div>
+
+      <!-- 탭 -->
+      <div class="tabs tabs-4" role="tablist">
+        <button class="tab active" data-tab="care" role="tab">돌보기</button>
+        <button class="tab" data-tab="shop" role="tab">상점</button>
+        <button class="tab" data-tab="closet" role="tab">옷장</button>
+        <button class="tab" data-tab="bag" role="tab">가방 <span id="bagCount" class="tab-count">0</span></button>
+      </div>
+
+      <div id="panel-care" class="panel active">
+        <button id="quizEntry" type="button" class="quiz-entry">
+          <span class="qe-ico">📝</span>
+          <span class="qe-body">
+            <span class="qe-tag">MINI CONTENT</span>
+            <span class="qe-title">제 1회 전국 랏코 박사 모의고사</span>
+            <span id="quizInfo" class="qe-sub">12문항 · 정답당 🐚3 · 만점 보너스 🐚20</span>
+          </span>
+          <span class="qe-arrow">→</span>
+        </button>
+        <div class="action-grid">
+          <button id="huntBtn" type="button" class="action-btn action-main">
+            <span class="act-ico">⚔️</span>
+            <span class="act-name">토벌 보내기</span>
+            <span class="act-sub">기력 -25 · 조개 획득</span>
+          </button>
+          <button id="napBtn" type="button" class="action-btn">
+            <span class="act-ico">💤</span>
+            <span class="act-name">낮잠 재우기</span>
+            <span class="act-sub">20초 · 기력 +40</span>
+          </button>
+          <button id="dailyBtn" type="button" class="action-btn">
+            <span class="act-ico">📅</span>
+            <span class="act-name">출석 도장</span>
+            <span id="dailySub" class="act-sub">하루 1번 · 🐚 +50</span>
+          </button>
+          <button id="talkBtn" type="button" class="action-btn">
+            <span class="act-ico">💬</span>
+            <span class="act-name">말 걸기</span>
+            <span class="act-sub">오늘의 한마디</span>
+          </button>
+        </div>
+        <div class="record-box">
+          <span>토벌 <b id="recHunts">0</b>회</span>
+          <span>•</span>
+          <span>쓰다듬 <b id="recPets">0</b>회</span>
+          <span>•</span>
+          <span>간식 <b id="recFed">0</b>개</span>
+        </div>
+      </div>
+
+      <div id="panel-shop" class="panel">
+        <p class="panel-caption">간식은 가방으로, 옷은 옷장으로, 배경은 바로 적용돼요.</p>
+        <div id="shopList" class="item-list"></div>
+      </div>
+
+      <div id="panel-closet" class="panel">
+        <div id="wearSlots" class="wear-slots"></div>
+        <div id="closetList" class="item-list"></div>
+      </div>
+
+      <div id="panel-bag" class="panel">
+        <div id="bagList" class="item-list"></div>
+      </div>
+    </section>
+
+    <!-- 3. 미니 컨텐츠: 모의고사 -->
+    <section id="quizScreen" class="screen">
       <div class="quiz-progress-bar-wrap">
         <div class="progress-info">
           <span id="questionStep" class="progress-step">문제 1 / 12</span>
-          <span id="rankerTip" class="progress-tip">
-            <img src="rakko_icon.webp" onerror="this.src='https://chiikawa.toho-movie.jp/atm/img/ch_icon_06.webp'" class="tip-icon" alt="">
+          <span class="progress-tip">
+            <img src="rakko_icon.webp" class="tip-icon" alt="">
             랏코 선생님이 지켜보고 계십니다
           </span>
         </div>
@@ -87,42 +206,33 @@
         </div>
       </div>
 
-      <!-- 문제 카드 영역 -->
       <div class="question-card">
         <div class="q-number-tag">
           <span id="qCategory" class="q-cat">기본 상식</span>
           <span id="qNumBadge" class="q-badge">Q.01</span>
         </div>
-        <h2 id="questionText" class="question-text">
-          문제 내용이 여기에 표시됩니다.
-        </h2>
-
-        <!-- 객관식 보기 리스트 -->
-        <div id="optionsList" class="options-grid">
-          <!-- JS로 동적 생성 -->
-        </div>
+        <h2 id="questionText" class="question-text">문제 내용</h2>
+        <div id="optionsList" class="options-grid"></div>
       </div>
 
-      <!-- 이전/다음 내비게이션 -->
       <div class="quiz-nav">
-        <button id="prevBtn" type="button" class="btn-secondary" style="display: none;">
-          이전 문제
-        </button>
+        <button id="prevBtn" type="button" class="btn-secondary" style="display: none;">이전 문제</button>
+        <button id="quitBtn" type="button" class="btn-secondary">그만두기</button>
       </div>
     </section>
 
-    <!-- 3. 결과 화면 -->
-    <section id="resultScreen" class="quiz-screen">
+    <section id="resultScreen" class="screen">
       <div class="result-header">
         <span class="result-badge">성적 통지표</span>
         <h2 class="result-title">모의고사 채점 결과</h2>
       </div>
 
-      <!-- 성적표 카드 -->
       <div class="report-card">
-        <!-- 랏코 캐릭터 결과 일러스트 (rakko_icon.webp 통일) -->
-        <div class="result-rakko-avatar">
-          <img id="resultRakkoImg" src="rakko_icon.webp" onerror="this.src='https://chiikawa.toho-movie.jp/atm/img/ch_icon_06.webp'" alt="랏코 선생님" class="rakko-result-img">
+        <div class="result-figure-wrap">
+          <div id="resultFigure" class="rakko-figure">
+            <img src="rakkopng/web/basic.webp" alt="랏코 선생님" class="rakko-img">
+            <div class="acc-layer"></div>
+          </div>
         </div>
 
         <div class="score-display">
@@ -136,56 +246,40 @@
         </div>
 
         <div class="rakko-speech-bubble">
-          <div class="bubble-tail"></div>
-          <p id="gradeComment" class="bubble-text">
-            "훌륭하다... 나와 함께 망토를 두르고 토벌 특훈을 가자꾸나."
-          </p>
+          <p id="gradeComment" class="bubble-text">"훌륭하다."</p>
         </div>
 
-        <!-- 스탯 요약 박스 -->
-        <div class="stat-grid">
-          <div class="stat-item">
-            <span class="stat-label">정답 수</span>
-            <span id="correctCount" class="stat-val">0 / 12</span>
+        <div class="report-stats">
+          <div class="rs-item">
+            <span class="rs-label">정답 수</span>
+            <span id="correctCount" class="rs-val">0 / 12</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">정답률</span>
-            <span id="accuracyRate" class="stat-val">0%</span>
+          <div class="rs-item">
+            <span class="rs-label">최고 점수</span>
+            <span id="bestScore" class="rs-val">0점</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">랏코력 등급</span>
-            <span id="rankGrade" class="stat-val">랭커</span>
+          <div class="rs-item">
+            <span class="rs-label">획득 조개</span>
+            <span id="quizReward" class="rs-val">🐚 0</span>
           </div>
         </div>
+        <p id="rewardLine" class="reward-line"></p>
       </div>
 
-      <!-- 액션 버튼들 (공유, 다시하기) -->
       <div class="result-actions">
-        <button id="shareResultBtn" type="button" class="btn-primary btn-share">
-          <span class="btn-icon">🔗</span>
-          <span>결과 링크 복사하기</span>
-        </button>
-        <button id="retryBtn" type="button" class="btn-secondary">
-          <span>다시 시험보기</span>
-        </button>
+        <button id="backBtn" type="button" class="btn-primary"><span>랏코에게 돌아가기</span></button>
+        <button id="retryBtn" type="button" class="btn-secondary"><span>다시 풀기</span></button>
       </div>
 
-      <!-- 오답 노트 / 해설 아코디언 -->
       <div class="review-section">
-        <h3 class="review-title">
-          <span>전체 문제 해설 & 오답 노트</span>
-        </h3>
-        <div id="reviewList" class="review-list">
-          <!-- JS로 동적 생성 -->
-        </div>
+        <h3 class="review-title"><span>전체 문제 해설 &amp; 오답 노트</span></h3>
+        <div id="reviewList" class="review-list"></div>
       </div>
-
     </section>
 
   </div>
 
-  <!-- 토스트 알림 -->
-  <div id="toast" class="toast-message">결과 링크가 복사되었습니다!</div>
+  <div id="toast" class="toast-message"></div>
 
   <script src="script.js"></script>
 </body>
