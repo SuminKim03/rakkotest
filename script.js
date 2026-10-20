@@ -14,11 +14,11 @@
   const FACES = ['basic', 'cheer', 'confident', 'expact', 'handshake', 'hmm', 'naruhodo', 'nod', 'resolution', 'sit', 'yawn'];
 
   const ITEMS = {
-    clam:    { name: '조개 구이',      ico: '🦪', price: 8, desc: '배부름 +20',                       eff: { hunger: 20 },                face: 'nod',       line: '"...음. 바다의 맛이군."' },
-    taiyaki: { name: '단팥 붕어빵',    ico: '🐟', price: 15, desc: '배부름 +30 · 기분 +5',            eff: { hunger: 30, mood: 5 },       face: 'nod',       line: '"따끈하군. 머리부터 먹는 파다."' },
+    clam:    { name: '조개 구이',      ico: '🦪', price: 8, desc: '배부름 +20 · 기력 +3',              eff: { hunger: 20, energy: 3 },                face: 'nod',       line: '"...음. 바다의 맛이군."' },
+    taiyaki: { name: '단팥 붕어빵',    ico: '🐟', price: 15, desc: '배부름 +30 · 기분 +5 · 기력 +5',   eff: { hunger: 30, mood: 5, energy: 5 },       face: 'nod',       line: '"따끈하군. 머리부터 먹는 파다."' },
     coffee:  { name: '설탕 듬뿍 커피', ico: '☕', price: 20, desc: '기력 +25 · 시럽 세 번 펌프',       eff: { energy: 25 },                face: 'confident', line: '"쓴 건... 아니다. 시럽을 넣었으니까."' },
-    pudding: { name: '커스터드 푸딩',  ico: '🍮', price: 25, desc: '기분 +20 · 배부름 +10',           eff: { mood: 20, hunger: 10 },      face: 'cheer',     line: '"흔들흔들... 좋군."' },
-    parfait: { name: '딸기 파르페',    ico: '🍓', price: 60, desc: '배부름 +35 · 기분 +35 · 친밀도 +10', eff: { hunger: 35, mood: 35, exp: 10 }, face: 'cheer', line: '"파, 파르페...!! (미간 주름이 사라졌다)"' }
+    pudding: { name: '커스터드 푸딩',  ico: '🍮', price: 25, desc: '기분 +20 · 배부름 +10 · 기력 +4',  eff: { mood: 20, hunger: 10, energy: 4 },      face: 'cheer',     line: '"흔들흔들... 좋군."' },
+    parfait: { name: '딸기 파르페',    ico: '🍓', price: 60, desc: '배부름 +35 · 기분 +35 · 기력 +8 · 친밀도 +10', eff: { hunger: 35, mood: 35, energy: 8, exp: 10 }, face: 'cheer', line: '"파, 파르페...!! (미간 주름이 사라졌다)"' }
   };
 
   const BGS = {
@@ -301,7 +301,7 @@
     full: ['"...지금은 배가 부르다."', '"나중에 먹겠다."']
   };
 
-  const RATE = { hunger: 0.3, mood: 0.25, energyRegen: 0.5 }; // 분당
+  const RATE = { hunger: 0.3, mood: 0.6, energyRegen: 0.5 }; // 분당
   const OFFLINE_CAP_MIN = 8 * 60;
   const HUNT_MS = 10000;
   const NAP_MS = 60000;
@@ -366,18 +366,82 @@
       napReady: 0,
       huntDay: '',
       huntCount: 0,
-      wins: 0
+      wins: 0,
+      driveReady: 0,
+      drives: 0
     };
   }
 
-  function loadState(h) {
-    const raw = store.get(keyOf(h));
+  function parseState(raw) {
     if (!raw) return null;
     try {
-      const s = JSON.parse(raw);
+      const s = typeof raw === 'string' ? JSON.parse(raw) : raw;
       return Object.assign(newState(), s, { rec: Object.assign({ hunts: 0, pets: 0, fed: 0 }, s.rec), wear: Object.assign({ head: null, face: null }, s.wear), clothes: s.clothes || [] });
     } catch (e) { return null; }
   }
+  function loadState(h) { return parseState(store.get(keyOf(h))); }
+
+  /* ======================================================================
+     서버 저장 (Firebase Firestore) — firebase-config.js 가 채워져 있을 때만
+     같은 비밀번호면 어느 기기·누구든 같은 랏코를 보고, 다른 화면의 변화도 실시간 반영
+     ====================================================================== */
+  const FB_CFG = window.RAKKO_FIREBASE || null;
+  const CLOUD = !!(FB_CFG && FB_CFG.apiKey && FB_CFG.projectId);
+  const FB_VER = '10.12.2';
+  const cloud = { ready: null, db: null, fs: null, unsub: null, writer: Math.random().toString(36).slice(2, 10), timer: null, lastJson: '', ok: false };
+
+  function cloudInit() {
+    if (!CLOUD) return Promise.resolve(false);
+    if (!cloud.ready) {
+      cloud.ready = (async () => {
+        const app = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`);
+        const fs = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`);
+        cloud.db = fs.getFirestore(app.initializeApp(FB_CFG));
+        cloud.fs = fs;
+        cloud.ok = true;
+        return true;
+      })().catch((e) => { console.error('[rakko] Firebase 연결 실패', e); cloud.ready = null; return false; });
+    }
+    return cloud.ready;
+  }
+
+  async function cloudGet(h) {
+    if (!(await cloudInit())) throw new Error('cloud-unavailable');
+    const { doc, getDoc } = cloud.fs;
+    const snap = await getDoc(doc(cloud.db, 'rakko', h));
+    return snap.exists() ? parseState(snap.data().s) : null;
+  }
+
+  // 의미 있는 변화만, 잠깐 모았다가 한 번에 올림 (무료 사용량 아끼기)
+  function cloudQueue(immediate) {
+    if (!CLOUD || !cloud.ok || !S || !acct) return;
+    clearTimeout(cloud.timer);
+    const run = () => {
+      if (!S || !acct) return;
+      const json = JSON.stringify(S);
+      const cmp = json.replace(/"last":\d+,?/, '');
+      if (cmp === cloud.lastJson) return;
+      cloud.lastJson = cmp;
+      const { doc, setDoc } = cloud.fs;
+      setDoc(doc(cloud.db, 'rakko', acct), { s: json, w: cloud.writer, t: Date.now() })
+        .catch((e) => { console.error('[rakko] 서버 저장 실패', e); cloud.lastJson = ''; });
+    };
+    if (immediate) run(); else cloud.timer = setTimeout(run, 1200);
+  }
+
+  function cloudWatch(h) {
+    cloudUnwatch();
+    if (!CLOUD || !cloud.ok) return;
+    const { doc, onSnapshot } = cloud.fs;
+    cloud.unsub = onSnapshot(doc(cloud.db, 'rakko', h), (snap) => {
+      if (!snap.exists() || snap.metadata.hasPendingWrites) return;
+      const d = snap.data();
+      if (d.w === cloud.writer || acct !== h) return;
+      const remote = parseState(d.s);
+      if (remote) adoptRemote(remote);
+    }, (e) => console.error('[rakko] 실시간 동기화 오류', e));
+  }
+  function cloudUnwatch() { if (cloud.unsub) { cloud.unsub(); cloud.unsub = null; } }
 
   /* ======================================================================
      DOM
@@ -387,7 +451,7 @@
   const loginForm = $('loginForm'), pwInput = $('pwInput');
   const newAccountBox = $('newAccountBox'), loginQuote = $('loginQuote');
   const room = $('room'), rakkoStage = $('rakkoStage'), rakkoImg = $('rakkoImg'), rakkoFigure = $('rakkoFigure');
-  const quizScreen = $('quizScreen'), resultScreen = $('resultScreen'), huntScreen = $('huntScreen');
+  const quizScreen = $('quizScreen'), resultScreen = $('resultScreen'), huntScreen = $('huntScreen'), driveScreen = $('driveScreen');
   const speech = $('speech'), speechText = $('speechText');
   const busyBanner = $('busyBanner'), busyLabel = $('busyLabel'), busyFill = $('busyFill');
   const petGauge = $('petGauge'), petFill = $('petFill'), fxLayer = $('fxLayer');
@@ -427,25 +491,62 @@
   const expNeed = (lv) => 40 + lv * 20;
   const titleOf = (lv) => TITLES.reduce((t, [min, name]) => (lv >= min ? name : t), TITLES[0][1]);
 
+  let lastCloudTick = 0;
   function save(force) {
     if (!S || !acct) return;
     const now = Date.now();
+    if (force) cloudQueue(false);
+    else if (now - lastCloudTick > 60000) { lastCloudTick = now; cloudQueue(false); }
     if (!force && now - lastSave < 3000) return;
     lastSave = now;
     store.set(keyOf(acct), JSON.stringify(S));
   }
 
+  // 다른 기기/사람이 바꾼 내용을 화면에 반영
+  function adoptRemote(remote) {
+    S = remote;
+    cloud.lastJson = JSON.stringify(S).replace(/"last":\d+,?/, '');
+    applyElapsed(Date.now());
+    store.set(keyOf(acct), JSON.stringify(S));
+    currentFace = '';
+    renderAll();
+    if (gameScreen.classList.contains('active') && Date.now() > speechUntil) say('"...누가 다녀갔군."', 2000);
+  }
+
   /* ======================================================================
      로그인
      ====================================================================== */
-  loginForm.addEventListener('submit', (e) => {
+  let loggingIn = false;
+  const loginBtnLabel = loginForm.querySelector('.btn-label');
+
+  // 서버(있으면) → 이 브라우저 순서로 찾기. 서버에 없고 브라우저에만 있으면 서버로 옮겨줌
+  async function findAccount(h) {
+    const local = loadState(h);
+    if (!CLOUD) return { state: local, from: 'local' };
+    try {
+      const remote = await cloudGet(h);
+      if (remote) return { state: remote, from: 'cloud' };
+      return { state: local, from: local ? 'migrate' : 'none' };
+    } catch (e) {
+      toast_('서버에 연결하지 못했어요. 잠시 이 브라우저에만 저장돼요');
+      return { state: local, from: 'local' };
+    }
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (loggingIn) return;
     const pw = pwInput.value;
     if (!pw) { shakeInput(); return; }
     const h = hash('rakko:' + pw);
-    const existing = loadState(h);
-    if (existing) {
-      enterGame(h, existing, false);
+    loggingIn = true;
+    loginBtnLabel.textContent = '확인 중...';
+    const found = await findAccount(h);
+    loggingIn = false;
+    loginBtnLabel.textContent = '숙소 입장하기';
+    if (found.state) {
+      enterGame(h, found.state, false);
+      if (found.from === 'migrate') toast_('이 브라우저의 랏코를 서버로 옮겼어요. 이제 어디서든 같은 비밀번호로 만나요');
     } else {
       pendingHash = h;
       newAccountBox.hidden = false;
@@ -482,6 +583,8 @@
 
   $('logoutBtn').addEventListener('click', () => {
     save(true);
+    cloudQueue(true);
+    cloudUnwatch();
     clearInterval(loopId);
     acct = null; S = null; pendingHash = null;
     session.clear();
@@ -499,7 +602,9 @@
     if (S.busy && S.busy.type === 'hunt') S.busy.end = 0;
     applyElapsed(Date.now());
     finishBusyIfDone(Date.now(), true);
+    cloud.lastJson = '';
     save(true);
+    cloudWatch(h);
 
     showScreen(gameScreen);
     switchTab('care');
@@ -524,7 +629,7 @@
   }
 
   function showScreen(el) {
-    [loginScreen, gameScreen, huntScreen, quizScreen, resultScreen].forEach((s) => s.classList.remove('active'));
+    [loginScreen, gameScreen, huntScreen, driveScreen, quizScreen, resultScreen].forEach((s) => s.classList.remove('active'));
     el.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -537,7 +642,7 @@
     S.last = now;
     if (dtMin <= 0) return;
     S.hunger = clamp(S.hunger - RATE.hunger * dtMin);
-    S.mood = clamp(S.mood - RATE.mood * dtMin * (S.hunger < 20 ? 2 : 1));
+    S.mood = clamp(S.mood - RATE.mood * dtMin * (S.hunger < 20 ? 2 : 1) * (S.energy < 15 ? 1.5 : 1));
     if (!S.busy || S.busy.type !== 'hunt') S.energy = clamp(S.energy + RATE.energyRegen * dtMin);
   }
 
@@ -549,6 +654,7 @@
     renderStats();
     renderBusy(now);
     renderNapBtn();
+    renderDriveBtn();
     updateFace(now);
     maybeIdleLine(now);
     if (now > speechUntil && speechUntil !== 0) { speech.style.opacity = '0'; speechUntil = 0; }
@@ -751,7 +857,7 @@
     pokeTimes.push(now);
     if (pokeTimes.length >= 7) {
       pokeTimes = [];
-      changeStats({ mood: -3 });
+      changeStats({ mood: -5 });
       setFace('hmm', 2500);
       say(pick(LINES.pokeTooMuch), 2500);
       fx('💢', p.x, p.y);
@@ -1266,9 +1372,9 @@
   };
 
   const FOES = {
-    easy:   { name: '꼬마 덩어리', tag: '쉬움', hp: 3, speed: 0.75, perfect: 0.13, good: 0.36, energy: 15, hunger: 8,  reward: [5, 7],   exp: 6,  drop: ['clam', 0.1],    minLv: 1, svg: foeSvg('#b9a6d6', '#d9cdeb') },
-    normal: { name: '수풀 괴물',   tag: '보통', hp: 5, speed: 1.1,  perfect: 0.10, good: 0.29, energy: 25, hunger: 12, reward: [10, 13], exp: 12, drop: ['taiyaki', 0.15], minLv: 1, svg: foeSvg('#8fb07a', '#c2d8a8', { horns: true }) },
-    hard:   { name: '거대 괴수',   tag: '어려움', hp: 7, speed: 1.45, perfect: 0.08, good: 0.24, energy: 35, hunger: 16, reward: [18, 22], exp: 20, drop: ['pudding', 0.2], minLv: 3, svg: foeSvg('#c77a8a', '#e6b3bd', { horns: true, spikes: true, eye3: true }) }
+    easy:   { name: '꼬마 덩어리', tag: '쉬움', hp: 4, speed: 1.05, perfect: 0.085, good: 0.25, atk: 3.2, drift: 0, energy: 15, hunger: 8,  reward: [5, 7],   exp: 6,  drop: ['clam', 0.1],    minLv: 1, svg: foeSvg('#b9a6d6', '#d9cdeb') },
+    normal: { name: '수풀 괴물',   tag: '보통', hp: 6, speed: 1.45, perfect: 0.065, good: 0.2, atk: 2.7, drift: 0.12, energy: 25, hunger: 12, reward: [10, 13], exp: 12, drop: ['taiyaki', 0.15], minLv: 1, svg: foeSvg('#8fb07a', '#c2d8a8', { horns: true }) },
+    hard:   { name: '거대 괴수',   tag: '어려움', hp: 9, speed: 1.9, perfect: 0.05, good: 0.15, atk: 2.2, drift: 0.28, energy: 35, hunger: 16, reward: [18, 22], exp: 20, drop: ['pudding', 0.2], minLv: 3, svg: foeSvg('#c77a8a', '#e6b3bd', { horns: true, spikes: true, eye3: true }) }
   };
   const FOE_CLS = { easy: 'easy', normal: 'normal', hard: 'hard' };
   const HUNT_DAILY_FULL = 8; // 하루 8번까지 보상 100%, 이후 50%
@@ -1335,7 +1441,8 @@
       id, f, hp: f.hp, hearts: 3, combo: 0, maxCombo: 0, perfects: 0,
       pos: Math.random(), dir: Math.random() < 0.5 ? 1 : -1,
       speed: f.speed, pW: f.perfect * moodK, gW: f.good * moodK, zc: 0.5,
-      lockUntil: 0, last: performance.now(), over: false
+      lockUntil: 0, last: performance.now(), over: false,
+      atkLeft: f.atk + 1.2, zdir: Math.random() < 0.5 ? 1 : -1
     };
     huntSelect.hidden = true;
     huntResult.hidden = true;
@@ -1360,6 +1467,9 @@
 
   function placeZone() {
     H.zc = 0.18 + Math.random() * 0.64;
+    drawZone();
+  }
+  function drawZone() {
     zoneGood.style.left = `${(H.zc - H.gW / 2) * 100}%`;
     zoneGood.style.width = `${H.gW * 100}%`;
     zonePerfect.style.left = `${(H.zc - H.pW / 2) * 100}%`;
@@ -1374,6 +1484,22 @@
     if (H.pos > 1) { H.pos = 2 - H.pos; H.dir = -1; }
     if (H.pos < 0) { H.pos = -H.pos; H.dir = 1; }
     marker.style.left = `${H.pos * 100}%`;
+    // 판정 구간이 움직이는 상대
+    if (H.f.drift) {
+      H.zc += H.zdir * H.f.drift * dt;
+      const lo = H.gW / 2 + 0.02, hi = 1 - H.gW / 2 - 0.02;
+      if (H.zc > hi) { H.zc = hi; H.zdir = -1; }
+      if (H.zc < lo) { H.zc = lo; H.zdir = 1; }
+      drawZone();
+    }
+    // 반격 타이머: 너무 오래 망설이면 괴물이 먼저 친다
+    H.atkLeft -= dt;
+    $('foeAtkFill').style.width = `${Math.max(0, H.atkLeft / H.f.atk) * 100}%`;
+    if (H.atkLeft <= 0) {
+      takeDamage('반격당했다!');
+      if (!H || H.over) return;
+      placeZone();
+    }
     rafId = requestAnimationFrame(huntLoop);
   }
 
@@ -1413,21 +1539,31 @@
       fxIn($('arenaFx'), `-${dmg}`, fr.left - r.left + fr.width / 2, fr.top - r.top + 10, perfect ? '#c98a2c' : '#8a2436');
       setHuntFace(perfect ? 'confident' : 'resolution');
       $('foeHpFill').style.width = `${(H.hp / H.f.hp) * 100}%`;
-      H.speed *= 1.06;
+      H.speed *= 1.08;
+      H.atkLeft = H.f.atk;
       if (H.hp <= 0) { endHunt(true); return; }
     } else {
-      H.hearts -= 1;
-      H.combo = 0;
-      judge('빗나감...', 'miss');
-      flash(foeWrap, 'attack', 220);
-      flash(rakkoBox, 'hurt', 220);
-      flash(arena, 'shake', 360);
-      setHuntFace('hmm');
-      renderHearts();
-      if (H.hearts <= 0) { endHunt(false); return; }
+      takeDamage('빗나감...');
+      if (H.over) return;
     }
     comboEl.textContent = H.combo >= 2 ? `${H.combo} 콤보` : '';
     placeZone();
+    setTimeout(() => { if (H && !H.over) setHuntFace('resolution'); }, 450);
+  }
+
+  function takeDamage(label) {
+    const rakkoBox = huntFigure.parentElement;
+    H.hearts -= 1;
+    H.combo = 0;
+    H.atkLeft = H.f.atk;
+    judge(label, 'miss');
+    flash(foeWrap, 'attack', 220);
+    flash(rakkoBox, 'hurt', 220);
+    flash(arena, 'shake', 360);
+    setHuntFace('hmm');
+    renderHearts();
+    comboEl.textContent = '';
+    if (H.hearts <= 0) { endHunt(false); return; }
     setTimeout(() => { if (H && !H.over) setHuntFace('resolution'); }, 450);
   }
 
@@ -1475,7 +1611,7 @@
     } else {
       reward = tired ? 1 : 2;
       addExp(2);
-      S.mood = clamp(S.mood - 5);
+      S.mood = clamp(S.mood - 8);
     }
     addShells(reward);
     save(true);
@@ -1506,6 +1642,351 @@
       setFace(win ? 'confident' : 'naruhodo', 4000);
       say(win ? `"토벌 다녀왔다. 조개 ${reward}개다."` : '"...오늘은 운이 없었군."', 4000);
     }, 900);
+  }
+
+
+  /* ======================================================================
+     드라이브 미니게임 (방향키)
+     ====================================================================== */
+  const DRIVE_SEC = 45;
+  const DRIVE_COOLDOWN_MS = 3 * 60000;
+  const carImg = new Image();
+  carImg.src = IMG('car');
+  const dc = $('driveCanvas');
+  const dctx = dc.getContext('2d');
+  let D = null;
+  let driveRaf = 0;
+  const keys = { ArrowLeft: false, ArrowRight: false };
+
+  function driveWait() {
+    const ms = Math.max(0, (S.driveReady || 0) - Date.now());
+    const m = Math.floor(ms / 60000), s = Math.ceil((ms % 60000) / 1000);
+    return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+  }
+  function renderDriveBtn() {
+    if (!S) return;
+    const cd = Date.now() < (S.driveReady || 0);
+    $('driveBtn').disabled = !!S.busy || cd;
+    $('driveSub').textContent = S.busy && S.busy.type === 'nap' ? '자는 중' : cd ? `${driveWait()} 후 가능` : '기력 +5~10';
+  }
+
+  $('driveBtn').addEventListener('click', () => {
+    if (S.busy && S.busy.type === 'nap') { toast_('낮잠 자는 중이에요'); return; }
+    if (Date.now() < (S.driveReady || 0)) { toast_(`차가 쉬는 중이에요 · ${driveWait()} 후 가능`); return; }
+    showScreen(driveScreen);
+    $('driveIntro').hidden = false;
+    $('drivePlay').hidden = true;
+    $('driveResult').hidden = true;
+    $('driveHearts').innerHTML = '';
+    $('driveTitle').textContent = '토코토코 드라이브';
+  });
+  $('driveCancel').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
+  $('driveBack').addEventListener('click', () => { showScreen(gameScreen); renderAll(); });
+  $('driveStart').addEventListener('click', startDrive);
+
+  function sizeCanvas() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = dc.clientWidth || 500, h = dc.clientHeight || 270;
+    dc.width = Math.round(w * dpr);
+    dc.height = Math.round(h * dpr);
+    dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w, h };
+  }
+
+  function startDrive() {
+    if (Date.now() < (S.driveReady || 0)) return;
+    S.driveReady = Date.now() + DRIVE_COOLDOWN_MS;
+    save(true);
+    $('driveIntro').hidden = true;
+    $('driveResult').hidden = true;
+    $('drivePlay').hidden = false;
+    const { w, h } = sizeCanvas();
+    const roadTop = h * 0.5, roadBot = h * 0.94;
+    const laneH = (roadBot - roadTop) / 3;
+    D = {
+      w, h, roadTop, roadBot,
+      lanes: [0, 1, 2].map((i) => roadTop + laneH * (i + 0.78)),
+      lane: 1, carY: 0, tilt: 0,
+      speed: 1, dist: 0, t: 0, scroll: 0,
+      objs: [], parts: [], texts: [], puffs: [],
+      spawnIn: 1.2, hearts: 3, inv: 0, splashes: 0, crashes: 0,
+      count: 3, started: false, over: false, last: performance.now(), lineAt: 0
+    };
+    D.carY = D.lanes[1];
+    keys.ArrowLeft = keys.ArrowRight = false;
+    renderDriveHearts();
+    $('driveTitle').textContent = '드라이브 중...';
+    countdown();
+    cancelAnimationFrame(driveRaf);
+    driveRaf = requestAnimationFrame(driveLoop);
+  }
+
+  function countdown() {
+    const el = $('driveCount');
+    const steps = ['3', '2', '1', '출발!'];
+    steps.forEach((txt, i) => setTimeout(() => {
+      if (!D || D.over) return;
+      el.textContent = txt;
+      if (i === steps.length - 1) { D.started = true; setTimeout(() => { el.textContent = ''; }, 500); }
+    }, i * 650));
+  }
+
+  function renderDriveHearts() {
+    $('driveHearts').innerHTML = [0, 1, 2].map((i) => `<span class="${i < D.hearts ? '' : 'lost'}">♥</span>`).join('');
+  }
+
+  // 입력
+  function laneMove(dir) {
+    if (!D || D.over || !D.started) return;
+    const nl = Math.max(0, Math.min(2, D.lane + dir));
+    if (nl !== D.lane) { D.lane = nl; D.tilt = dir * -0.08; }
+  }
+  document.addEventListener('keydown', (e) => {
+    if (!driveScreen.classList.contains('active') || $('drivePlay').hidden) return;
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+    if (e.repeat) return;
+    if (e.code === 'ArrowUp') laneMove(-1);
+    if (e.code === 'ArrowDown') laneMove(1);
+    if (e.code in keys) keys[e.code] = true;
+  });
+  document.addEventListener('keyup', (e) => { if (e.code in keys) keys[e.code] = false; });
+  document.querySelectorAll('.pad-btn').forEach((b) => {
+    const k = b.dataset.key;
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      b.classList.add('on');
+      if (k === 'ArrowUp') laneMove(-1);
+      else if (k === 'ArrowDown') laneMove(1);
+      else keys[k] = true;
+    });
+    const up = () => { b.classList.remove('on'); if (k in keys) keys[k] = false; };
+    b.addEventListener('pointerup', up);
+    b.addEventListener('pointerleave', up);
+    b.addEventListener('pointercancel', up);
+  });
+  // 캔버스 위/아래 탭으로도 차선 변경
+  dc.addEventListener('pointerdown', (e) => {
+    if (!D) return;
+    const r = dc.getBoundingClientRect();
+    laneMove((e.clientY - r.top) < D.carY - 30 ? -1 : 1);
+  });
+
+  function driveLoop(t) {
+    if (!D) return;
+    const dt = Math.min(0.05, (t - D.last) / 1000);
+    D.last = t;
+    if (D.started && !D.over) updateDrive(dt);
+    drawDrive();
+    if (!D.over || D.parts.length || D.texts.length) driveRaf = requestAnimationFrame(driveLoop);
+  }
+
+  function updateDrive(dt) {
+    D.t += dt;
+    // 속도: ← 느리게 / → 빠르게, 손 떼면 보통으로
+    const target = keys.ArrowRight ? 1.7 : keys.ArrowLeft ? 0.6 : 1;
+    const ramp = 1 + Math.min(1, D.t / DRIVE_SEC) * 0.7; // 갈수록 빨라짐
+    D.speed += (target - D.speed) * Math.min(1, dt * 3);
+    const px = 270 * D.speed * ramp * dt;
+    D.scroll += px;
+    D.dist += px / 2600; // km (게임 단위)
+    D.carY += (D.lanes[D.lane] - D.carY) * Math.min(1, dt * 12);
+    D.tilt *= Math.pow(0.02, dt);
+    if (D.inv > 0) D.inv -= dt;
+
+    // 생성
+    D.spawnIn -= dt * D.speed * ramp;
+    if (D.spawnIn <= 0) {
+      D.spawnIn = 0.42 + Math.random() * 0.5;
+      const r = Math.random();
+      const type = r < 0.3 ? 'puddle' : r < 0.75 ? 'cone' : 'rock';
+      const near = D.objs.filter((o) => o.x > D.w - 90 && o.type !== 'puddle').map((o) => o.lane);
+      const free = [0, 1, 2].filter((l) => !near.includes(l));
+      if (type === 'puddle') {
+        D.objs.push({ type, lane: rand(0, 2), x: D.w + 40, hit: false, w: 70 });
+      } else if (free.length >= 2) {
+        // 가끔은 두 차선을 동시에 막음 (항상 한 차선은 비워둠)
+        const pickL = free.sort(() => Math.random() - 0.5);
+        const n = Math.random() < 0.35 + Math.min(1, D.t / DRIVE_SEC) * 0.3 && free.length === 3 ? 2 : 1;
+        for (let i = 0; i < n; i++) {
+          const t2 = i === 0 ? type : (Math.random() < 0.5 ? 'cone' : 'rock');
+          D.objs.push({ type: t2, lane: pickL[i], x: D.w + 40 + i * 6, hit: false, w: 30 });
+        }
+      }
+    }
+    D.objs.forEach((o) => { o.x -= px; });
+    D.objs = D.objs.filter((o) => o.x > -100);
+
+    // 충돌
+    const carX = D.w * 0.14, carW = 118;
+    const curLane = D.lanes.reduce((best, y, i) => (Math.abs(y - D.carY) < Math.abs(D.lanes[best] - D.carY) ? i : best), 0);
+    D.objs.forEach((o) => {
+      if (o.hit || o.lane !== curLane) return;
+      const left = carX + 18, right = carX + carW - 10;
+      if (o.x + o.w / 2 < left || o.x - o.w / 2 > right) return;
+      o.hit = true;
+      if (o.type === 'puddle') {
+        D.splashes += 1;
+        splash(o.x, D.lanes[o.lane]);
+        floatText('첨벙!', carX + carW / 2, D.carY - 90, '#8a5a2a');
+        if (Date.now() > D.lineAt) { D.lineAt = Date.now() + 2500; }
+        $('driveSplash').textContent = D.splashes;
+      } else if (D.inv <= 0) {
+        D.hearts -= 1;
+        D.crashes += 1;
+        D.inv = 1.0;
+        D.speed = 0.4;
+        floatText('쿵!', carX + carW / 2, D.carY - 90, '#c62828');
+        for (let i = 0; i < 8; i++) D.parts.push({ x: o.x, y: D.lanes[o.lane] - 10, vx: (Math.random() - 0.3) * 160, vy: -Math.random() * 160, life: 0.6, c: '#9a8d88', r: 3 });
+        renderDriveHearts();
+        if (D.hearts <= 0) endDrive();
+      }
+    });
+
+    // 파티클
+    D.parts.forEach((p) => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; p.life -= dt; });
+    D.parts = D.parts.filter((p) => p.life > 0);
+    D.texts.forEach((x) => { x.y -= 30 * dt; x.life -= dt; });
+    D.texts = D.texts.filter((x) => x.life > 0);
+    if (Math.random() < dt * 8) D.puffs.push({ x: carX + 6, y: D.carY - 14, r: 4, life: 0.6 });
+    D.puffs.forEach((p) => { p.x -= (40 + 120 * D.speed) * dt; p.r += 10 * dt; p.life -= dt; });
+    D.puffs = D.puffs.filter((p) => p.life > 0);
+
+    const left = Math.max(0, DRIVE_SEC - D.t);
+    $('driveTimeFill').style.width = `${(left / DRIVE_SEC) * 100}%`;
+    $('driveDist').textContent = D.dist.toFixed(1);
+    $('driveSpeed').textContent = D.speed > 1.25 ? '빠르게' : D.speed < 0.75 ? '느리게' : '보통';
+    if (left <= 0) endDrive();
+  }
+
+  function splash(x, y) {
+    for (let i = 0; i < 16; i++) {
+      D.parts.push({ x: x + (Math.random() - 0.5) * 40, y: y - 6, vx: (Math.random() - 0.6) * 220, vy: -120 - Math.random() * 220, life: 0.7 + Math.random() * 0.3, c: Math.random() < 0.5 ? '#8a6a4a' : '#b08a62', r: 2 + Math.random() * 3 });
+    }
+  }
+  function floatText(text, x, y, color) { D.texts.push({ text, x, y, color, life: 0.9 }); }
+
+  /* 그리기 */
+  const OUT = '#3b2b2b';
+  function drawDrive() {
+    const g = dctx, w = D.w, h = D.h, s = D.scroll;
+    g.clearRect(0, 0, w, h);
+    // 하늘
+    const sky = g.createLinearGradient(0, 0, 0, D.roadTop);
+    sky.addColorStop(0, '#d8eef3'); sky.addColorStop(1, '#fbf1dc');
+    g.fillStyle = sky; g.fillRect(0, 0, w, D.roadTop);
+    g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(w - 60, 40, 20, 0, Math.PI * 2); g.fill();
+    // 구름
+    g.fillStyle = '#fff';
+    for (let i = 0; i < 4; i++) {
+      const x = ((i * 190 - s * 0.08) % (w + 200) + w + 200) % (w + 200) - 100;
+      const y = 30 + (i % 2) * 28;
+      g.beginPath(); g.ellipse(x, y, 28, 11, 0, 0, Math.PI * 2); g.ellipse(x + 20, y - 6, 18, 10, 0, 0, Math.PI * 2); g.fill();
+    }
+    // 언덕
+    g.fillStyle = '#c5dba5'; g.strokeStyle = OUT; g.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      const x = ((i * 260 - s * 0.2) % (w + 300) + w + 300) % (w + 300) - 150;
+      g.beginPath(); g.ellipse(x, D.roadTop + 6, 150, 58, 0, Math.PI, 0); g.fill(); g.stroke();
+    }
+    // 나무 (길가)
+    for (let i = 0; i < 6; i++) {
+      const x = ((i * 140 - s * 0.55) % (w + 160) + w + 160) % (w + 160) - 80;
+      const y = D.roadTop - 2;
+      g.fillStyle = '#a07a52'; g.fillRect(x - 3, y - 26, 6, 26); g.strokeRect(x - 3, y - 26, 6, 26);
+      g.fillStyle = '#9fc077'; g.beginPath(); g.arc(x, y - 36, 16, 0, Math.PI * 2); g.fill(); g.stroke();
+    }
+    // 길
+    g.fillStyle = '#e4d6c3'; g.fillRect(0, D.roadTop, w, D.roadBot - D.roadTop);
+    g.fillStyle = '#b9d394'; g.fillRect(0, D.roadBot, w, h - D.roadBot);
+    g.strokeStyle = OUT; g.lineWidth = 2.5;
+    g.beginPath(); g.moveTo(0, D.roadTop); g.lineTo(w, D.roadTop); g.moveTo(0, D.roadBot); g.lineTo(w, D.roadBot); g.stroke();
+    g.strokeStyle = '#fff'; g.lineWidth = 3; g.setLineDash([22, 22]); g.lineDashOffset = s % 44;
+    const laneH = (D.roadBot - D.roadTop) / 3;
+    for (let i = 1; i < 3; i++) { const y = D.roadTop + laneH * i; g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+    g.setLineDash([]);
+
+    // 오브젝트 + 차를 차선 순서대로 (위 차선이 뒤)
+    const carLaneF = (D.carY - D.lanes[0]) / (D.lanes[2] - D.lanes[0]) * 2;
+    const items = D.objs.map((o) => ({ z: o.lane - (o.type === 'puddle' ? 0.5 : 0), draw: () => drawObj(o) }));
+    items.push({ z: carLaneF + 0.1, draw: drawCar });
+    items.sort((a, b) => a.z - b.z).forEach((it) => it.draw());
+
+    // 물방울/파편
+    D.puffs.forEach((p) => { g.globalAlpha = Math.max(0, p.life) * 0.6; g.fillStyle = '#fff'; g.beginPath(); g.arc(p.x, p.y, p.r, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#cbbfb2'; g.lineWidth = 1; g.stroke(); });
+    g.globalAlpha = 1;
+    D.parts.forEach((p) => { g.globalAlpha = Math.max(0, Math.min(1, p.life * 2)); g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, p.r, 0, Math.PI * 2); g.fill(); });
+    g.globalAlpha = 1;
+    D.texts.forEach((x) => {
+      g.globalAlpha = Math.min(1, x.life * 2);
+      g.font = "700 26px Gaegu, 'Gowun Dodum', sans-serif"; g.textAlign = 'center';
+      g.lineWidth = 5; g.strokeStyle = '#fff'; g.strokeText(x.text, x.x, x.y);
+      g.fillStyle = x.color; g.fillText(x.text, x.x, x.y);
+    });
+    g.globalAlpha = 1;
+  }
+
+  function drawObj(o) {
+    const g = dctx, y = D.lanes[o.lane];
+    g.strokeStyle = OUT; g.lineWidth = 2.5;
+    if (o.type === 'puddle') {
+      g.fillStyle = o.hit ? '#a88a68' : '#8a6a4a';
+      g.beginPath(); g.ellipse(o.x, y - 4, 38, 9, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,0.45)'; g.beginPath(); g.ellipse(o.x - 10, y - 7, 12, 2.5, 0, 0, Math.PI * 2); g.fill();
+    } else if (o.type === 'cone') {
+      g.fillStyle = '#f08a3c';
+      g.beginPath(); g.moveTo(o.x - 15, y); g.lineTo(o.x + 15, y); g.lineTo(o.x + 4, y - 38); g.lineTo(o.x - 4, y - 38); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#fff'; g.fillRect(o.x - 9, y - 22, 18, 6);
+      g.fillStyle = '#e07a2c'; g.fillRect(o.x - 19, y - 3, 38, 5); g.strokeRect(o.x - 19, y - 3, 38, 5);
+    } else {
+      g.fillStyle = '#b8b0a6';
+      g.beginPath(); g.moveTo(o.x - 18, y); g.quadraticCurveTo(o.x - 20, y - 22, o.x - 4, y - 26); g.quadraticCurveTo(o.x + 18, y - 26, o.x + 18, y); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(o.x - 4, y - 16); g.lineTo(o.x + 4, y - 12); g.stroke();
+    }
+  }
+
+  function drawCar() {
+    const g = dctx;
+    const carW = 118, carH = carW * (carImg.naturalHeight || 212) / (carImg.naturalWidth || 255);
+    const x = D.w * 0.14;
+    const bob = Math.abs(Math.sin(D.t * 16)) * 2.2 * D.speed; // 토코토코
+    if (D.inv > 0 && Math.floor(D.inv * 10) % 2 === 0) return; // 부딪힌 뒤 깜빡임
+    g.save();
+    g.translate(x + carW / 2, D.carY + 2);
+    g.rotate(D.tilt + (D.speed - 1) * -0.03);
+    g.scale(-1, 1); // 그림 속 차가 왼쪽을 보고 있어서, 진행 방향(오른쪽)으로 뒤집기
+    g.fillStyle = 'rgba(59,15,23,0.15)';
+    g.beginPath(); g.ellipse(0, 0, carW * 0.42, 6, 0, 0, Math.PI * 2); g.fill();
+    if (carImg.complete && carImg.naturalWidth) g.drawImage(carImg, -carW / 2, -carH - bob, carW, carH);
+    g.restore();
+  }
+
+  function endDrive() {
+    if (!D || D.over) return;
+    D.over = true;
+    keys.ArrowLeft = keys.ArrowRight = false;
+    const energy = rand(5, 10);
+    const moodUp = Math.min(10, D.splashes);
+    S.energy = clamp(S.energy + energy);
+    S.mood = clamp(S.mood + moodUp - D.crashes * 3);
+    S.drives = (S.drives || 0) + 1;
+    addExp(3);
+    save(true);
+    const crashedOut = D.hearts <= 0;
+    setTimeout(() => {
+      $('drivePlay').hidden = true;
+      $('driveResult').hidden = false;
+      $('driveTitle').textContent = crashedOut ? '견인 당했다...' : '드라이브 끝!';
+      $('drTitle').textContent = crashedOut ? '쾅쾅쾅... 견인 당했다' : D.splashes >= 8 ? '흙탕물 드라이브 최고!' : '드라이브 끝!';
+      $('drLine').textContent = crashedOut ? '"...운전 연습이 더 필요하군."'
+        : D.splashes >= 8 ? '"흙탕물을 가르는 이 느낌... 영상보다 좋군."'
+        : '"...좋은 드라이브였다. 기운이 난다."';
+      $('drDist').textContent = `${D.dist.toFixed(1)}km`;
+      $('drSplash').textContent = D.splashes;
+      $('drEnergy').textContent = `+${energy}`;
+      $('drExtra').textContent = `기분 ${moodUp - D.crashes * 3 >= 0 ? '+' : ''}${moodUp - D.crashes * 3} · 친밀도 +3 · 다음 드라이브는 ${driveWait()} 후`;
+      setFace(crashedOut ? 'naruhodo' : 'cheer', 3500);
+      say(crashedOut ? '"...차는 무사하다. 아마도."' : `"드라이브 다녀왔다. 기력이 ${energy} 찼다."`, 4000);
+    }, crashedOut ? 700 : 300);
   }
 
   /* 탭 */
@@ -1568,6 +2049,7 @@
     $('dailySub').textContent = doneToday ? `연속 ${S.streak}일째 · 내일 또 받아요` : `연속 ${nextStreak}일째 · 🐚 +${dailyGift(nextStreak)}`;
     $('huntBtn').disabled = !!S.busy;
     renderNapBtn();
+    renderDriveBtn();
 
     $('recHunts').textContent = S.rec.hunts;
     $('recPets').textContent = S.rec.pets;
@@ -1594,8 +2076,8 @@
   }
 
   /* 탭 닫을 때 저장 */
-  window.addEventListener('pagehide', () => save(true));
-  document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
+  window.addEventListener('pagehide', () => { save(true); cloudQueue(true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { save(true); cloudQueue(true); } });
 
   /* 주소창 끝에 남은 ? (예전 폼 제출 흔적) 지우기 */
   if (window.location.href.endsWith('?') || window.location.search) {
@@ -1603,10 +2085,14 @@
   }
 
   /* 새로고침 시 세션 유지 */
-  (function resume() {
+  const metaStore = document.getElementById('storeMode');
+  if (metaStore) metaStore.textContent = CLOUD ? '어느 기기에서든 같은 랏코' : '이 브라우저에 저장돼요';
+  if (CLOUD) cloudInit();
+
+  (async function resume() {
     const h = session.get();
     if (!h) return;
-    const s = loadState(h);
-    if (s) enterGame(h, s, false);
+    const found = await findAccount(h);
+    if (found.state) enterGame(h, found.state, false);
   })();
 })();

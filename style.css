@@ -1173,6 +1173,8 @@ button { font-family: var(--font-main); }
 .foe-body svg { display: block; width: 100%; height: auto; overflow: visible; }
 @keyframes foeBob { from { transform: translateY(0) scale(1, 1); } to { transform: translateY(-5px) scale(1.03, 0.97); } }
 .foe-hp { width: 80%; height: 8px; background: rgba(255,255,255,0.75); border: 1.5px solid #3b2b2b; border-radius: 5px; overflow: hidden; margin-bottom: 6px; }
+.foe-atk { width: 60%; height: 5px; background: rgba(255,255,255,0.7); border-radius: 3px; overflow: hidden; margin: -2px 0 6px; }
+.foe-atk-fill { height: 100%; width: 100%; background: #f08a3c; }
 .foe-hp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #c94056, #f28b9b); transition: width 0.25s ease; }
 
 .slash {
@@ -1261,6 +1263,39 @@ button { font-family: var(--font-main); }
 .hunt-result { text-align: center; background: #fdfaf6; border: 2px solid #ecd8be; border-radius: var(--radius-lg); padding: 1.4rem 1.2rem; }
 .hunt-result .grade-title { margin-bottom: 0.4rem; }
 .hr-line { margin-bottom: 1rem; }
+
+/* --------------------------------------------------------------------------
+   드라이브 미니게임
+   -------------------------------------------------------------------------- */
+.action-wide { grid-column: span 2; flex-direction: row; align-items: center; gap: 0.6rem; }
+.action-wide .act-sub { margin-left: auto; }
+
+.drive-panel { text-align: center; background: #fdfaf6; border: 2px solid #ecd8be; border-radius: var(--radius-lg); padding: 1.3rem 1.1rem; }
+.drive-car-img { scale: -1 1; width: 150px; height: auto; display: block; margin: 0 auto 0.6rem; animation: tokotoko 0.32s ease-in-out infinite alternate; }
+@keyframes tokotoko { from { transform: translateY(0) rotate(-1deg); } to { transform: translateY(-3px) rotate(1deg); } }
+.drive-panel .bubble-text { margin-bottom: 0.8rem; }
+.drive-help { list-style: none; text-align: left; font-size: 0.86rem; color: #4a3e41; background: #fff; border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); padding: 0.7rem 0.9rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.3rem; word-break: keep-all; }
+
+.drive-time { height: 8px; background: #efe4d5; border-radius: 4px; overflow: hidden; margin-bottom: 0.6rem; }
+.drive-time-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #7a9a4a, #a9c77a); transition: width 0.2s linear; }
+.drive-canvas-wrap { position: relative; border-radius: var(--radius-md); overflow: hidden; border: 1.5px solid #ebd4ba; margin-bottom: 0.6rem; touch-action: none; }
+#driveCanvas { display: block; width: 100%; height: 270px; }
+.drive-count {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-hand); font-size: 3.2rem; font-weight: 700; color: var(--color-rakko-wine);
+  text-shadow: 0 2px 0 #fff, 0 0 10px #fff; pointer-events: none;
+}
+.drive-count:empty { display: none; }
+.drive-stats { display: flex; justify-content: center; gap: 1rem; font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 0.7rem; }
+.drive-stats b { color: var(--color-rakko-dark); font-variant-numeric: tabular-nums; }
+.drive-pad { display: flex; justify-content: center; align-items: center; gap: 0.7rem; user-select: none; -webkit-user-select: none; }
+.pad-col { display: flex; flex-direction: column; gap: 0.45rem; }
+.pad-btn {
+  width: 64px; height: 52px; border-radius: 14px; border: 2px solid #e3cfb6; background: #fff;
+  font-size: 1.2rem; color: var(--color-rakko-wine); cursor: pointer; touch-action: none;
+  box-shadow: 0 3px 0 #e3cfb6; transition: transform 0.06s, box-shadow 0.06s;
+}
+.pad-btn.on, .pad-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #e3cfb6; background: #fcf1f3; }
 
 /* --------------------------------------------------------------------------
    토스트

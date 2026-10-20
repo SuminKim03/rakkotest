@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261020b">
+  <link rel="stylesheet" href="style.css?v=20261020g">
 </head>
 <body>
 
@@ -65,7 +65,7 @@
       <div class="exam-meta-info">
         <span>비밀번호가 곧 계정이에요</span>
         <span>•</span>
-        <span>이 브라우저에 저장돼요</span>
+        <span id="storeMode">이 브라우저에 저장돼요</span>
       </div>
     </section>
 
@@ -161,7 +161,12 @@
             <span class="act-name">출석 도장</span>
             <span id="dailySub" class="act-sub">하루 1번 · 연속 출석 보너스</span>
           </button>
-          <button id="talkBtn" type="button" class="action-btn">
+          <button id="driveBtn" type="button" class="action-btn">
+            <span class="act-ico">🚗</span>
+            <span class="act-name">드라이브</span>
+            <span id="driveSub" class="act-sub">기력 +5~10</span>
+          </button>
+          <button id="talkBtn" type="button" class="action-btn action-wide">
             <span class="act-ico">💬</span>
             <span class="act-name">말 걸기</span>
             <span class="act-sub">오늘의 한마디</span>
@@ -221,6 +226,7 @@
           </div>
           <div id="foeWrap" class="foe-wrap">
             <div class="foe-hp"><div id="foeHpFill" class="foe-hp-fill"></div></div>
+            <div class="foe-atk" title="반격까지"><div id="foeAtkFill" class="foe-atk-fill"></div></div>
             <div id="foeBody" class="foe-body"></div>
           </div>
           <div id="slash" class="slash"></div>
@@ -235,7 +241,7 @@
             <div id="zonePerfect" class="zone zone-perfect"></div>
             <div id="marker" class="marker"></div>
           </div>
-          <p class="timing-hint">금색 구간에서 베면 <b>회심</b>(2배)! · 스페이스바 / 화면 탭도 OK</p>
+          <p class="timing-hint">금색 구간 = <b>회심</b>(2배) · 괴물 머리 위 주황 막대가 다 줄면 <b>반격</b>! · 스페이스바 / 화면 탭 OK</p>
         </div>
 
         <button id="slashBtn" type="button" class="btn-primary slash-btn">⚔️ 베기!</button>
@@ -260,6 +266,68 @@
         <div class="result-actions" style="margin-top:1rem;margin-bottom:0">
           <button id="huntBack" type="button" class="btn-primary"><span>숙소로 돌아가기</span></button>
           <button id="huntAgain" type="button" class="btn-secondary"><span>한 번 더 토벌</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 드라이브 미니게임 -->
+    <section id="driveScreen" class="screen">
+      <div class="top-bar">
+        <div class="lv-box">
+          <span class="q-badge">드라이브</span>
+          <span id="driveTitle" class="lv-title">토코토코 드라이브</span>
+        </div>
+        <div class="top-right">
+          <span id="driveHearts" class="hunt-hearts"></span>
+        </div>
+      </div>
+
+      <div id="driveIntro" class="drive-panel">
+        <img src="rakkopng/web/car.webp" alt="차를 운전하는 랏코" class="drive-car-img">
+        <p class="bubble-text">"드라이브다... 안전 운전하겠다."</p>
+        <ul class="drive-help">
+          <li><b>↑ ↓</b> 차선 바꾸기 · <b>← →</b> 느리게 / 빠르게</li>
+          <li>🟤 <b>흙탕물</b>을 지나가면 첨벙! 랏코 기분이 좋아져요</li>
+          <li>🚧 라바콘·돌에 부딪히면 하트 -1 (3번이면 끝)</li>
+          <li>45초 드라이브 후 <b>기력 +5~10</b> (3분마다 1번)</li>
+        </ul>
+        <button id="driveStart" type="button" class="btn-primary">🚗 출발!</button>
+        <button id="driveCancel" type="button" class="btn-secondary" style="margin-top:0.6rem">숙소로 돌아가기</button>
+      </div>
+
+      <div id="drivePlay" hidden>
+        <div class="drive-time"><div id="driveTimeFill" class="drive-time-fill"></div></div>
+        <div class="drive-canvas-wrap">
+          <canvas id="driveCanvas"></canvas>
+          <div id="driveCount" class="drive-count"></div>
+        </div>
+        <div class="drive-stats">
+          <span>거리 <b id="driveDist">0.0</b>km</span>
+          <span>첨벙 <b id="driveSplash">0</b></span>
+          <span>속도 <b id="driveSpeed">보통</b></span>
+        </div>
+        <div class="drive-pad">
+          <button type="button" class="pad-btn" data-key="ArrowLeft" aria-label="느리게">◀</button>
+          <div class="pad-col">
+            <button type="button" class="pad-btn" data-key="ArrowUp" aria-label="위 차선">▲</button>
+            <button type="button" class="pad-btn" data-key="ArrowDown" aria-label="아래 차선">▼</button>
+          </div>
+          <button type="button" class="pad-btn" data-key="ArrowRight" aria-label="빠르게">▶</button>
+        </div>
+      </div>
+
+      <div id="driveResult" class="hunt-result" hidden>
+        <img src="rakkopng/web/car.webp" alt="" class="drive-car-img">
+        <h3 id="drTitle" class="grade-title">드라이브 끝!</h3>
+        <p id="drLine" class="bubble-text hr-line">"...좋은 드라이브였다."</p>
+        <div class="report-stats">
+          <div class="rs-item"><span class="rs-label">거리</span><span id="drDist" class="rs-val">0km</span></div>
+          <div class="rs-item"><span class="rs-label">첨벙</span><span id="drSplash" class="rs-val">0</span></div>
+          <div class="rs-item"><span class="rs-label">기력</span><span id="drEnergy" class="rs-val">+0</span></div>
+        </div>
+        <p id="drExtra" class="reward-line"></p>
+        <div class="result-actions" style="margin-top:1rem;margin-bottom:0">
+          <button id="driveBack" type="button" class="btn-primary"><span>숙소로 돌아가기</span></button>
         </div>
       </div>
     </section>
@@ -354,6 +422,7 @@
 
   <div id="toast" class="toast-message"></div>
 
-  <script src="script.js?v=20261020b"></script>
+  <script src="firebase-config.js?v=20261020g"></script>
+  <script src="script.js?v=20261020g"></script>
 </body>
 </html>
