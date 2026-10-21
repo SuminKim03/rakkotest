@@ -7,29 +7,49 @@
 (function () {
   'use strict';
 
+  // 브라우저가 예전 index.html을 캐시해서 HTML·JS 버전이 섞이면, 주소를 살짝 바꿔 새로 받아오기 (1번만)
+  const BUILD = '20261021a';
+  try {
+    const htmlVer = document.documentElement.dataset.ver || '';
+    if (htmlVer !== BUILD && sessionStorage.getItem('rakko.fresh') !== BUILD) {
+      sessionStorage.setItem('rakko.fresh', BUILD);
+      location.replace(location.pathname + '?fresh=' + Date.now());
+      return;
+    }
+  } catch (e) { /* noop */ }
+
   /* ======================================================================
      데이터
      ====================================================================== */
-  const IMG = (name) => `rakkopng/web/${name}.webp`;
+  // 지금 보고 있는 캐릭터 (랏코 / 하치와레)
+  let S = null;         // 계정 상태 (조개·가방·옷장·배경 + 캐릭터별 상태 S.pets)
+  let PET = null;       // 지금 캐릭터의 상태 (배부름·기분·기력·친밀도·입은 옷 ...)
+  const curChar = () => (S && S.cur) || 'rakko';
+  const V = (rakko, hachi) => (curChar() === 'hachi' ? hachi : rakko); // 캐릭터별 대사
+  const IMG = (name, ch) => {
+    const c = CHARS[ch || curChar()];
+    return `${c.dir}${(c.alias && c.alias[name]) || name}.webp`;
+  };
   const FACES = ['basic', 'cheer', 'confident', 'expact', 'handshake', 'hmm', 'naruhodo', 'nod', 'resolution', 'sit', 'yawn'];
 
   const ITEMS = {
-    clam:    { name: '조개 구이',      ico: '🦪', price: 8, desc: '배부름 +20 · 기력 +3',              eff: { hunger: 20, energy: 3 },                face: 'nod',       line: '"...음. 바다의 맛이군."' },
-    taiyaki: { name: '단팥 붕어빵',    ico: '🐟', price: 15, desc: '배부름 +30 · 기분 +5 · 기력 +5',   eff: { hunger: 30, mood: 5, energy: 5 },       face: 'nod',       line: '"따끈하군. 머리부터 먹는 파다."' },
-    coffee:  { name: '설탕 듬뿍 커피', ico: '☕', price: 20, desc: '기력 +25 · 시럽 세 번 펌프',       eff: { energy: 25 },                face: 'confident', line: '"쓴 건... 아니다. 시럽을 넣었으니까."' },
-    pudding: { name: '커스터드 푸딩',  ico: '🍮', price: 25, desc: '기분 +20 · 배부름 +10 · 기력 +4',  eff: { mood: 20, hunger: 10, energy: 4 },      face: 'cheer',     line: '"흔들흔들... 좋군."' },
-    parfait: { name: '딸기 파르페',    ico: '🍓', price: 60, desc: '배부름 +35 · 기분 +35 · 기력 +8 · 친밀도 +10', eff: { hunger: 35, mood: 35, energy: 8, exp: 10 }, face: 'cheer', line: '"파, 파르페...!! (미간 주름이 사라졌다)"' }
+    clam:    { name: '조개 구이',      ico: '🦪', price: 8, desc: '배부름 +20 · 기력 +3',              eff: { hunger: 20, energy: 3 },                face: 'nod',       line: '"...음. 바다의 맛이군."', hline: '"조개 구이! 바다 냄새 난다~"' },
+    taiyaki: { name: '단팥 붕어빵',    ico: '🐟', price: 15, desc: '배부름 +30 · 기분 +5 · 기력 +5',   eff: { hunger: 30, mood: 5, energy: 5 },       face: 'nod',       line: '"따끈하군. 머리부터 먹는 파다."', hline: '"붕어빵 따끈따끈해! 꼬리까지 팥 들었어!"' },
+    coffee:  { name: '설탕 듬뿍 커피', ico: '☕', price: 20, desc: '기력 +25 · 시럽 세 번 펌프',       eff: { energy: 25 },                face: 'confident', line: '"쓴 건... 아니다. 시럽을 넣었으니까."', hline: '"으, 써... 아니 달다! 힘난다~!"' },
+    pudding: { name: '커스터드 푸딩',  ico: '🍮', price: 25, desc: '기분 +20 · 배부름 +10 · 기력 +4',  eff: { mood: 20, hunger: 10, energy: 4 },      face: 'cheer',     line: '"흔들흔들... 좋군."', hline: '"푸딩이다~! 탱글탱글해!"' },
+    parfait: { name: '딸기 파르페',    ico: '🍓', price: 60, desc: '배부름 +35 · 기분 +35 · 기력 +8 · 친밀도 +10', eff: { hunger: 35, mood: 35, energy: 8, exp: 10 }, face: 'cheer', line: '"파, 파르페...!! (미간 주름이 사라졌다)"', hline: '"파르페라는 거야!? 진짜 먹어도 돼!?"' }
   };
 
   const BGS = {
     room:    { name: '토벌대 숙소', price: 0,   desc: '기본으로 지내는 방',          swatch: 'repeating-linear-gradient(90deg,#fdf5ea 0 8px,#f8eddd 8px 16px)' },
     field:   { name: '토벌 들판',   price: 250, desc: '토벌 나가기 전 몸풀기 장소',   swatch: 'linear-gradient(180deg,#fbe7c6 55%,#9fc077 55%)' },
     sea:     { name: '바닷가',      price: 350, desc: '해달의 고향... 파도 소리',    swatch: 'linear-gradient(180deg,#cfe9f2 45%,#6fb3c5 45% 70%,#f1dfb8 70%)' },
-    parfait: { name: '파르페 가게', price: 500, desc: '꿈의 장소. 랏코 기분 최고',    swatch: 'repeating-linear-gradient(135deg,#fff4f6 0 6px,#fde6ea 6px 12px)' },
+    parfait: { name: '파르페 가게', price: 500, desc: '꿈의 장소. 둘 다 기분 최고',    swatch: 'repeating-linear-gradient(135deg,#fff4f6 0 6px,#fde6ea 6px 12px)' },
     night:   { name: '밤하늘',      price: 650, desc: '별 보며 조용히 쉬는 밤',      swatch: 'linear-gradient(180deg,#2a2342,#4b3560)' }
   };
 
   // 표정 이미지별 머리/눈 위치 (이미지 크기 대비 %) — 옷 위치 계산용
+  // noHead: 의상(잠옷·모자 등)을 입은 컷이라 머리 옷 숨김 / noFace: 얼굴 옷 숨김
   const ANCHORS = {
     basic: {ex: 47.4, ey: 46.8, ew: 22.4, top: 15.8, hw: 67.7, hx: 47.6, w: 473, h: 520},
     cheer: {ex: 51.0, ey: 44.9, ew: 23.1, top: 14.2, hw: 71.1, hx: 51.7, w: 463, h: 520},
@@ -42,6 +62,31 @@
     resolution: {ex: 49.2, ey: 48.3, ew: 19.3, top: 19.4, hw: 59.5, hx: 49.5, w: 486, h: 520},
     sit: {ex: 48.1, ey: 44.0, ew: 23.8, top: 11.7, hw: 70.5, hx: 48.1, w: 475, h: 520},
     yawn: {ex: 50.0, ey: 44.9, ew: 22.3, top: 12.9, hw: 66.5, hx: 51.7, w: 499, h: 520}
+  };
+
+  const HACHI_ANCHORS = {
+    basic: {ex: 44, ey: 43, ew: 28, top: 2, hw: 92, hx: 50, w: 436, h: 520},
+    cheer: {ex: 48, ey: 30, ew: 22, top: 1, hw: 86, hx: 50, w: 423, h: 520},
+    confident: {ex: 40.5, ey: 49, ew: 23, top: 0, hw: 80, hx: 45, w: 460, h: 520, noHead: true},
+    expact: {ex: 49.5, ey: 44, ew: 33, top: 2, hw: 96, hx: 50, w: 432, h: 520},
+    handshake: {ex: 48, ey: 37, ew: 20, top: 2, hw: 67, hx: 46, w: 520, h: 506},
+    hmm: {ex: 55, ey: 49, ew: 26, top: 1, hw: 92, hx: 50, w: 453, h: 520},
+    naruhodo: {ex: 42.5, ey: 51, ew: 25, top: 10, hw: 62, hx: 44, w: 520, h: 488},
+    nod: {ex: 50, ey: 36, ew: 32, top: 1, hw: 95, hx: 50, w: 459, h: 520},
+    resolution: {ex: 61.5, ey: 46, ew: 25, top: 2, hw: 70, hx: 62, w: 520, h: 520},
+    sit: {ex: 44.5, ey: 47, ew: 27, top: 0, hw: 90, hx: 50, w: 463, h: 520, noHead: true},
+    yawn: {ex: 50, ey: 33, ew: 24, top: 0, hw: 90, hx: 50, w: 424, h: 520, noHead: true},
+    eat: {ex: 52, ey: 43, ew: 28, top: 2, hw: 95, hx: 50, w: 487, h: 520},
+    x_pochette: {ex: 48, ey: 36, ew: 24, top: 1, hw: 95, hx: 50, w: 453, h: 520},
+    x_plain: {ex: 50.5, ey: 43, ew: 25, top: 1, hw: 95, hx: 50, w: 460, h: 520},
+    x_chopsticks: {ex: 42.5, ey: 37, ew: 25, top: 1, hw: 85, hx: 45, w: 480, h: 520},
+    x_camera: {w: 479, h: 520, noHead: true, noFace: true},
+    x_broom: {w: 520, h: 438, noHead: true, noFace: true},
+    x_magical: {w: 434, h: 520, noHead: true, noFace: true},
+    x_hood: {w: 468, h: 520, noHead: true, noFace: true},
+    x_hat: {w: 455, h: 520, noHead: true, noFace: true},
+    x_ramen: {w: 520, h: 474, noHead: true, noFace: true},
+    x_kart: {w: 409, h: 520, noHead: true, noFace: true}
   };
 
   const SK = 'stroke="#3b2b2b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"';
@@ -265,7 +310,73 @@
     }
   ];
 
+
+  // 하치와레 모의고사 (공식 설정 기반)
+  const HACHI_QUESTIONS = [
+    { id: 1, category: '기본 설정 / 이름', question: '"하치와레"라는 이름은 어디에서 왔을까요?',
+      options: ['고양이 얼굴의 "八(팔)" 자처럼 갈라진 무늬', '여덟 번째로 태어난 먼작귀라서', '귀가 여덟 갈래로 갈라져서', '좋아하는 음식 이름에서'],
+      answer: 0, explanation: '"하치와레(八割れ)"는 고양이 얼굴에서 볼 수 있는, 이마부터 八 자 모양으로 갈라진 무늬를 부르는 말이에요. 하치와레의 파란 머리 무늬가 바로 이 모양이에요.' },
+    { id: 2, category: '생활 / 집', question: '하치와레가 사는 곳은 어디일까요?',
+      options: ['동굴', '라멘 가게 2층', '나무 위 오두막', '치이카와네 집 다락방'],
+      answer: 0, explanation: '하치와레는 동굴에서 살아요. 낡은 돗자리에서 자고, 나무 열매즙을 약으로 쓰는 소박한 동굴 생활을 해요.' },
+    { id: 3, category: '명대사', question: '곤란한 상황에서 하치와레가 외치는 대표 대사는?',
+      options: ['"어떻게든 되어라~!(なんとかなれーッ)"', '"온다...!"', '"야하~!"', '"울었다...!"'],
+      answer: 0, explanation: '위기 때 "なんとかなれーッ!(어떻게든 되어라~!)"라고 외치고, 실제로 어떻게든 헤쳐 나가는 경우가 많아요. "온다...!"는 랏코, "야하~!"는 우사기 쪽이에요.' },
+    { id: 4, category: '말버릇', question: '말을 잘 못 하는 치이카와·우사기의 반응을 하치와레가 대신 풀어줄 때 자주 붙이는 말은?',
+      options: ['"~라는 거야!?(ってコト!?)"', '"~하는 것이다"', '"~구먼유"', '"~라고 전해라"'],
+      answer: 0, explanation: '"○○ってコト!?(~라는 거야!?)"는 하치와레의 유명한 말버릇이에요. 다만 하치와레의 통역이 늘 정확한 건 아니에요.' },
+    { id: 5, category: '능력', question: '치이카와·우사기와 비교했을 때 하치와레만의 특징은?',
+      options: ['일상 대화를 유창하게 말할 수 있다', '하늘을 날 수 있다', '토벌 랭킹 1위다', '말은 못 하고 춤으로만 대화한다'],
+      answer: 0, explanation: '치이카와와 우사기는 짧은 소리·몸짓 위주로 소통하지만, 하치와레는 일상 대화를 술술 해요. 그래서 독자에게 상황을 설명해 주는 안내자 역할도 해요.' },
+    { id: 6, category: '무기 / 토벌', question: '하치와레가 토벌할 때 쓰는 무기는?',
+      options: ['파란 사스마타(갈래진 장대)', '바이킹 소드', '나무 몽둥이', '새총'],
+      answer: 0, explanation: '하치와레는 파란색 사스마타(さすまた, 끝이 갈라진 장대)를 들고 토벌에 나서요. 바이킹 소드는 랏코의 무기예요.' },
+    { id: 7, category: '취미', question: '하치와레가 즐기는 취미로 알려진 것은?',
+      options: ['사진 찍기 (카메라)', '낚시', '뜨개질', '자동차 영상 보기'],
+      answer: 0, explanation: '하치와레는 노래와 수다, 사진 찍기를 좋아하고 취미로 카메라도 사요. 흙탕물 가르는 자동차 영상을 좋아하는 건 랏코예요.' },
+    { id: 8, category: '노래', question: '하치와레가 기타를 치며 부르는 노래이자, TV 애니메이션 엔딩곡의 제목은?',
+      options: ['「ひとりごつ(히토리고츠)」', '「なんとかなれ」', '「ちいかわのうた」', '「くさむしりマーチ」'],
+      answer: 0, explanation: '「ひとりごつ」는 하치와레가 기타를 치며 부르는 노래로, TV 애니메이션 엔딩곡이었어요. 작사는 원작자 나가노예요.' },
+    { id: 9, category: '자격증', question: '하치와레가 취득한 자격증은?',
+      options: ['풀뽑기 검정 5급', '토벌 1급', '라멘 조리사', '운전면허'],
+      answer: 0, explanation: '하치와레는 풀뽑기 검정(草むしり検定) 5급을 땄고, 자격증 덕분에 보수도 올랐어요.' },
+    { id: 10, category: '인간관계', question: '하치와레가 동경하며 스승처럼 따르는 캐릭터는?',
+      options: ['랏코', '모몽가', '시사', '쿠리만쥬'],
+      answer: 0, explanation: '하치와레는 토벌 랭킹 1위 랏코를 동경하고 스승처럼 따라요. 랏코를 "선생님"이라고 부른 것도 치이카와와 하치와레예요.' },
+    { id: 11, category: '에피소드', question: '애니 5화에서 하치와레가 치이카와에게 라면 "차르메라"를 끓여주며 뭐라고 잘못 말했을까요?',
+      options: ['"차리메라"', '"카르메라"', '"차르메로"', '"찰리멜라"'],
+      answer: 0, explanation: '하치와레는 "チャルメラ(차르메라)"를 "チャリメラ(차리메라)"라고 잘못 말했어요.' },
+    { id: 12, category: '돈 관리', question: '하치와레가 돈을 잘 모으지 못하는 이유로 알려진 것은?',
+      options: ['번 돈을 친구들과 밥 먹고 선물하는 데 써서', '도박을 좋아해서', '토벌로 돈을 못 벌어서', '동굴 월세가 비싸서'],
+      answer: 0, explanation: '하치와레는 벌이가 나쁘지 않지만, 친구들에게 밥을 사고 선물하는 데 써서 돈이 잘 모이지 않아요. 다정한 성격이 드러나는 부분이에요.' }
+  ];
+
+  // 캐릭터 정의
+  const CHARS = {
+    rakko: {
+      name: '랏코', dir: 'rakkopng/web/', anchors: ANCHORS, alias: { eat: 'nod' },
+      car: 'rakkopng/web/car.webp', carW: 118,
+      pokeFaces: ['cheer', 'confident', 'expact', 'handshake', 'naruhodo'],
+      quizTitle: '제 1회 전국 랏코 박사 모의고사', quizWatch: '랏코 선생님이 지켜보고 계십니다', quizLabel: '당신의 랏코 칭호'
+    },
+    hachi: {
+      name: '하치와레', dir: 'hachipng/web/', anchors: HACHI_ANCHORS, alias: {},
+      car: 'hachipng/web/car.webp', carW: 104, headK: 0.92, byK: 0.82,
+      pokeFaces: ['cheer', 'handshake', 'nod', 'x_camera', 'x_pochette', 'x_plain', 'x_broom', 'x_magical', 'x_hood', 'x_hat', 'x_ramen', 'x_chopsticks', 'x_kart'],
+      quizTitle: '제 1회 전국 하치와레 박사 모의고사', quizWatch: '하치와레가 두근두근 지켜보는 중', quizLabel: '당신의 하치와레 칭호'
+    }
+  };
+
   // 친밀도 레벨별 칭호 (랏코 선생님과 나의 관계)
+  const HACHI_TITLES = [
+    [1, '처음 만난 사이'],
+    [3, '얼굴 아는 먼작귀'],
+    [5, '같이 노는 사이'],
+    [8, '풀뽑기 동료'],
+    [12, '토벌 동료'],
+    [16, '단짝 후보'],
+    [20, '둘도 없는 단짝']
+  ];
   const TITLES = [
     [1, '처음 만난 사이'],
     [3, '얼굴 아는 먼작귀'],
@@ -300,6 +411,37 @@
     sleeping: ['"(새근새근...)"', '"Zzz..."', '"(파르페... 잠꼬대)"'],
     full: ['"...지금은 배가 부르다."', '"나중에 먹겠다."']
   };
+
+  const HACHI_LINES = {
+    greetNew: ['"안녕! 나는 하치와레! 잘 부탁해~"', '"우리 오늘부터 친구라는 거야!?"'],
+    greetBack: ['"왔다~! 기다렸어!"', '"오늘은 뭐 하고 놀까?"', '"어서 와! 보고 싶었어~"'],
+    poke: ['"응? 왜애?"', '"히히, 간지러워!"', '"찰칵! 지금 표정 찍었어~"', '"뭔데 뭔데?"', '"어떻게든 되어라~!"', '"나 부른 거라는 거야!?"', '"(꼬리 살랑)"'],
+    pokeTooMuch: ['"으앙... 그만 찔러어..."', '"울었다...!"'],
+    pet: ['"헤헤... 좋다아~"', '"(눈을 꼭 감는다)"', '"더 해줘! 더!"', '"이거 완전 행복이라는 거야~"'],
+    hungry: ['"배고파아... 꼬르륵"', '"주먹밥 먹고 싶다..."', '"뭐 먹을 거 없어...?"'],
+    sleepy: ['"하암... 졸려..."', '"잠옷 입고 싶다..."'],
+    sad: ['"...힝."', '"(동굴 구석에서 시무룩)"'],
+    idle: ['"오늘 날씨 사진 찍기 딱 좋다!"', '"(흥얼흥얼 노래 중)"', '"풀뽑기 하러 갈까?"', '"치이카와는 뭐 하고 있을까~"', '"어떻게든 되어라~!"', '"랏코 선생님처럼 강해지고 싶어!"'],
+    talk: [
+      '"힘들 땐 일단 외치는 거야! 어떻게든 되어라~!"',
+      '"동굴 집이 은근 아늑하다? 놀러 와!"',
+      '"요즘 사진 찍는 게 제일 재밌어!"',
+      '"랏코 선생님은 진짜 멋있어. 나도 언젠가...!"',
+      '"번 돈으로 친구들이랑 맛있는 거 먹는 게 최고야!"',
+      '"노래 부를 때 기분이 제일 좋아~"',
+      '"풀뽑기 검정 5급, 나 땄다? 헤헤!"'
+    ],
+    huntGo: ['"좋아, 토벌 간다! 어떻게든 되어라~!"', '"사스마타 준비 완료!"'],
+    nap: ['"잠옷 입고 올게... 하암"', '"쬐끔만 잘게..."'],
+    sleeping: ['"(쿨쿨...)"', '"Zzz..."', '"(주먹밥... 잠꼬대)"'],
+    full: ['"배불러~ 이따 먹을래!"', '"지금은 못 먹겠어..."']
+  };
+
+  CHARS.rakko.lines = LINES; CHARS.hachi.lines = HACHI_LINES;
+  CHARS.rakko.titles = TITLES; CHARS.hachi.titles = HACHI_TITLES;
+  CHARS.rakko.quiz = QUESTIONS; CHARS.hachi.quiz = HACHI_QUESTIONS;
+  const L = () => CHARS[curChar()].lines;
+  const CH = () => CHARS[curChar()];
 
   const RATE = { hunger: 0.3, mood: 0.6, energyRegen: 0.5 }; // 분당
   const OFFLINE_CAP_MIN = 8 * 60;
@@ -338,47 +480,66 @@
   }
   const keyOf = (h) => `rakko.save.${h}`;
 
+  function newPet() {
+    return {
+      lv: 1, exp: 0, hunger: 70, mood: 70, energy: 80,
+      busy: null, napReady: 0,
+      rec: { hunts: 0, pets: 0, fed: 0 },
+      wear: { head: null, face: null },
+      quizDay: '', quizCount: 0, quizBest: 0,
+      huntDay: '', huntCount: 0, wins: 0,
+      driveReady: 0, drives: 0
+    };
+  }
+  const PET_KEYS = Object.keys(newPet());
+
   function newState() {
     return {
-      v: 2,
+      v: 3,
       created: Date.now(),
       last: Date.now(),
       shells: 50,
-      lv: 1,
-      exp: 0,
-      hunger: 70,
-      mood: 70,
-      energy: 80,
       inv: { clam: 2, parfait: 1 },
       bgs: ['room'],
       bg: 'room',
       daily: '',
+      streak: 0,
       petDay: '',
       petShells: 0,
-      busy: null,
-      rec: { hunts: 0, pets: 0, fed: 0 },
       clothes: [],
-      wear: { head: null, face: null },
-      quizDay: '',
-      quizCount: 0,
-      quizBest: 0,
-      streak: 0,
-      napReady: 0,
-      huntDay: '',
-      huntCount: 0,
-      wins: 0,
-      driveReady: 0,
-      drives: 0
+      cur: 'rakko',
+      pets: { rakko: newPet(), hachi: newPet() }
     };
+  }
+
+  function fixPet(p) {
+    const d = newPet();
+    p = Object.assign(d, p || {});
+    p.rec = Object.assign({ hunts: 0, pets: 0, fed: 0 }, p.rec);
+    p.wear = Object.assign({ head: null, face: null }, p.wear);
+    return p;
   }
 
   function parseState(raw) {
     if (!raw) return null;
     try {
       const s = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      return Object.assign(newState(), s, { rec: Object.assign({ hunts: 0, pets: 0, fed: 0 }, s.rec), wear: Object.assign({ head: null, face: null }, s.wear), clothes: s.clothes || [] });
+      const st = Object.assign(newState(), s);
+      if (!s.pets) {
+        // 예전(랏코만 있던) 세이브 → 랏코 상태로 옮기고 하치와레는 새로
+        const r = {};
+        PET_KEYS.forEach((k) => { if (k in s) r[k] = s[k]; });
+        st.pets = { rakko: r, hachi: newPet() };
+        PET_KEYS.forEach((k) => { delete st[k]; });
+        st.v = 3;
+      }
+      st.pets = { rakko: fixPet(st.pets.rakko), hachi: fixPet(st.pets.hachi) };
+      if (!CHARS[st.cur]) st.cur = 'rakko';
+      st.clothes = st.clothes || [];
+      return st;
     } catch (e) { return null; }
   }
+  const syncPet = () => { PET = S ? S.pets[S.cur] : null; };
   function loadState(h) { return parseState(store.get(keyOf(h))); }
 
   /* ======================================================================
@@ -460,13 +621,12 @@
   const toast = $('toast');
 
   // 이미지 미리 불러오기
-  FACES.forEach((f) => { const i = new Image(); i.src = IMG(f); });
+  Object.keys(CHARS).forEach((ch) => Object.keys(CHARS[ch].anchors).concat(['car']).forEach((f) => { const i = new Image(); i.src = IMG(f, ch); }));
 
   /* ======================================================================
      상태
      ====================================================================== */
   let acct = null;      // 해시
-  let S = null;         // 게임 상태
   let pendingHash = null;
   let loopId = null;
   let faceUntil = 0;
@@ -486,12 +646,12 @@
   const today = () => dayKey(0);
   const dailyGift = (streak) => 25 + Math.min(Math.max(streak, 1) - 1, 6) * 5; // 25 ~ 55
   const napWait = () => {
-    const ms = Math.max(0, (S.napReady || 0) - Date.now());
+    const ms = Math.max(0, (PET.napReady || 0) - Date.now());
     const m = Math.floor(ms / 60000), s = Math.ceil((ms % 60000) / 1000);
     return m > 0 ? `${m}분 ${s}초` : `${s}초`;
   };
   const expNeed = (lv) => 40 + lv * 20;
-  const titleOf = (lv) => TITLES.reduce((t, [min, name]) => (lv >= min ? name : t), TITLES[0][1]);
+  const titleOf = (lv, ch) => { const T = CHARS[ch || curChar()].titles; return T.reduce((t, [min, name]) => (lv >= min ? name : t), T[0][1]); };
 
   let lastCloudTick = 0;
   function save(force) {
@@ -506,13 +666,16 @@
 
   // 다른 기기/사람이 바꾼 내용을 화면에 반영
   function adoptRemote(remote) {
+    const cur = S && S.cur;
     S = remote;
+    if (cur && CHARS[cur]) S.cur = cur; // 보고 있던 캐릭터는 그대로
+    syncPet();
     cloud.lastJson = JSON.stringify(S).replace(/"last":\d+,?/, '');
     applyElapsed(Date.now());
     store.set(keyOf(acct), JSON.stringify(S));
     currentFace = '';
     renderAll();
-    if (gameScreen.classList.contains('active') && Date.now() > speechUntil) say('"...누가 다녀갔군."', 2000);
+    if (gameScreen.classList.contains('active') && Date.now() > speechUntil) say(V('"...누가 다녀갔군."', '"어? 누가 왔다 갔나 봐!"'), 2000);
   }
 
   /* ======================================================================
@@ -548,7 +711,7 @@
     loginBtnLabel.textContent = '숙소 입장하기';
     if (found.state) {
       enterGame(h, found.state, false);
-      if (found.from === 'migrate') toast_('이 브라우저의 랏코를 서버로 옮겼어요. 이제 어디서든 같은 비밀번호로 만나요');
+      if (found.from === 'migrate') toast_('이 브라우저의 기록을 서버로 옮겼어요. 이제 어디서든 같은 비밀번호로 만나요');
     } else {
       pendingHash = h;
       newAccountBox.hidden = false;
@@ -588,7 +751,7 @@
     cloudQueue(true);
     cloudUnwatch();
     clearInterval(loopId);
-    acct = null; S = null; pendingHash = null;
+    acct = null; S = null; PET = null; pendingHash = null;
     session.clear();
     pwInput.value = '';
     newAccountBox.hidden = true;
@@ -599,9 +762,10 @@
   function enterGame(h, state, isNew) {
     acct = h;
     S = state;
+    syncPet();
     session.set(h);
     const awayMin = (Date.now() - S.last) / 60000;
-    if (S.busy && S.busy.type === 'hunt') S.busy.end = 0;
+    Object.values(S.pets).forEach((p) => { if (p.busy && p.busy.type === 'hunt') p.busy.end = 0; });
     applyElapsed(Date.now());
     finishBusyIfDone(Date.now(), true);
     cloud.lastJson = '';
@@ -615,14 +779,14 @@
 
     if (isNew) {
       setFace('handshake', 3000);
-      say(pick(LINES.greetNew), 4000);
-      toast_('새 랏코를 맞이했어요! 🐚 50개와 간식을 챙겨줬어요');
-    } else if (S.busy) {
-      say(S.busy.type === 'hunt' ? '"(토벌 중이다... 곧 돌아온다)"' : pick(LINES.sleeping), 3000);
+      say(pick(L().greetNew), 4000);
+      toast_('새 계정을 만들었어요! 랏코와 하치와레가 기다려요 · 🐚 50개와 간식을 챙겨줬어요');
+    } else if (PET.busy) {
+      say(pick(L().sleeping), 3000);
     } else {
       setFace('handshake', 2500);
-      if (awayMin > 120 && S.hunger < 30) say('"...늦었군. 배가 고프다."', 4000);
-      else say(pick(LINES.greetBack), 3500);
+      if (awayMin > 120 && PET.hunger < 30) say(V('"...늦었군. 배가 고프다."', '"왜 이제 왔어~ 배고파아..."'), 4000);
+      else say(pick(L().greetBack), 3500);
     }
 
     clearInterval(loopId);
@@ -639,13 +803,16 @@
   /* ======================================================================
      시간 흐름
      ====================================================================== */
+  // 시간은 두 캐릭터 모두에게 흐름 (안 보고 있는 쪽도 배고파지고 기분이 내려감)
   function applyElapsed(now) {
     const dtMin = Math.min(OFFLINE_CAP_MIN, Math.max(0, (now - S.last) / 60000));
     S.last = now;
     if (dtMin <= 0) return;
-    S.hunger = clamp(S.hunger - RATE.hunger * dtMin);
-    S.mood = clamp(S.mood - RATE.mood * dtMin * (S.hunger < 20 ? 2 : 1) * (S.energy < 15 ? 1.5 : 1));
-    if (!S.busy || S.busy.type !== 'hunt') S.energy = clamp(S.energy + RATE.energyRegen * dtMin);
+    Object.values(S.pets).forEach((p) => {
+      p.hunger = clamp(p.hunger - RATE.hunger * dtMin);
+      p.mood = clamp(p.mood - RATE.mood * dtMin * (p.hunger < 20 ? 2 : 1) * (p.energy < 15 ? 1.5 : 1));
+      if (!p.busy || p.busy.type !== 'hunt') p.energy = clamp(p.energy + RATE.energyRegen * dtMin);
+    });
   }
 
   function tick() {
@@ -657,6 +824,7 @@
     renderBusy(now);
     renderNapBtn();
     renderDriveBtn();
+    renderCharTabs();
     updateFace(now);
     maybeIdleLine(now);
     if (now > speechUntil && speechUntil !== 0) { speech.style.opacity = '0'; speechUntil = 0; }
@@ -668,11 +836,11 @@
      표정 & 말풍선
      ====================================================================== */
   function idleFace() {
-    if (S.busy && S.busy.type === 'hunt') return 'resolution';
-    if (S.busy && S.busy.type === 'nap') return 'sit';
-    if (S.energy < 20) return 'yawn';
-    if (S.hunger < 25) return 'expact';
-    if (S.mood < 25) return 'hmm';
+    if (PET.busy && PET.busy.type === 'hunt') return 'resolution';
+    if (PET.busy && PET.busy.type === 'nap') return 'sit';
+    if (PET.energy < 20) return 'yawn';
+    if (PET.hunger < 25) return 'expact';
+    if (PET.mood < 25) return 'hmm';
     return 'basic';
   }
 
@@ -689,9 +857,9 @@
   }
 
   function updateFace(now) {
-    const away = S.busy && S.busy.type === 'hunt' && now - S.busy.start > 1500;
+    const away = PET.busy && PET.busy.type === 'hunt' && now - PET.busy.start > 1500;
     rakkoFigure.classList.toggle('away', !!away);
-    rakkoFigure.classList.toggle('sleep', !!(S.busy && S.busy.type === 'nap'));
+    rakkoFigure.classList.toggle('sleep', !!(PET.busy && PET.busy.type === 'nap'));
     if (now < faceUntil) return;
     if (pointer.rubbing) return;
     applyFace(idleFace());
@@ -709,12 +877,12 @@
 
   function maybeIdleLine(now) {
     if (now < nextIdleLine) return;
-    let pool = LINES.idle;
-    if (S.busy && S.busy.type === 'nap') pool = LINES.sleeping;
-    else if (S.busy) return;
-    else if (S.hunger < 25) pool = LINES.hungry;
-    else if (S.energy < 20) pool = LINES.sleepy;
-    else if (S.mood < 25) pool = LINES.sad;
+    let pool = L().idle;
+    if (PET.busy && PET.busy.type === 'nap') pool = L().sleeping;
+    else if (PET.busy) return;
+    else if (PET.hunger < 25) pool = L().hungry;
+    else if (PET.energy < 20) pool = L().sleepy;
+    else if (PET.mood < 25) pool = L().sad;
     say(pick(pool), 3200);
   }
 
@@ -730,27 +898,27 @@
   }
 
   function addExp(n) {
-    S.exp += n;
+    PET.exp += n;
     let leveled = false;
-    while (S.exp >= expNeed(S.lv)) {
-      S.exp -= expNeed(S.lv);
-      S.lv += 1;
+    while (PET.exp >= expNeed(PET.lv)) {
+      PET.exp -= expNeed(PET.lv);
+      PET.lv += 1;
       leveled = true;
-      const bonus = 10 + S.lv * 2;
+      const bonus = 10 + PET.lv * 2;
       S.shells += bonus;
-      toast_(`친밀도 Lv.${S.lv} 달성! 「${titleOf(S.lv)}」 · 🐚 +${bonus}`);
+      toast_(`친밀도 Lv.${PET.lv} 달성! 「${titleOf(PET.lv)}」 · 🐚 +${bonus}`);
     }
     if (leveled) {
       setFace('cheer', 2500);
-      say('"...우리, 조금 더 가까워진 것 같군."', 3500);
+      say(V('"...우리, 조금 더 가까워진 것 같군."', '"우리 더 친해진 거라는 거야!?"'), 3500);
       burst('✨', 6);
     }
   }
 
   function changeStats(eff) {
-    if (eff.hunger) S.hunger = clamp(S.hunger + eff.hunger);
-    if (eff.mood) S.mood = clamp(S.mood + eff.mood);
-    if (eff.energy) S.energy = clamp(S.energy + eff.energy);
+    if (eff.hunger) PET.hunger = clamp(PET.hunger + eff.hunger);
+    if (eff.mood) PET.mood = clamp(PET.mood + eff.mood);
+    if (eff.energy) PET.energy = clamp(PET.energy + eff.energy);
     if (eff.exp) addExp(eff.exp);
   }
 
@@ -785,11 +953,11 @@
     pointer.x = e.clientX; pointer.y = e.clientY;
     pointer.moved += d;
     if (pointer.moved < 14) return;
-    if (S.busy && S.busy.type === 'hunt') return;
+    if (PET.busy && PET.busy.type === 'hunt') return;
 
     if (!pointer.rubbing) {
       pointer.rubbing = true;
-      if (!(S.busy && S.busy.type === 'nap')) { faceUntil = 0; applyFace('nod'); }
+      if (!(PET.busy && PET.busy.type === 'nap')) { faceUntil = 0; applyFace('nod'); }
       petGauge.classList.add('show');
     }
     lastRub = Date.now();
@@ -812,7 +980,7 @@
     try { rakkoStage.releasePointerCapture(e.pointerId); } catch (err) { /* noop */ }
     setTimeout(() => { if (!pointer.rubbing) petGauge.classList.remove('show'); }, 700);
     if (!wasRub && e.type === 'pointerup') poke(roomXY(e));
-    else if (wasRub && !(S.busy && S.busy.type === 'nap')) faceUntil = Date.now() + 600;
+    else if (wasRub && !(PET.busy && PET.busy.type === 'nap')) faceUntil = Date.now() + 600;
   }
   rakkoStage.addEventListener('pointerup', endPointer);
   rakkoStage.addEventListener('pointercancel', endPointer);
@@ -823,8 +991,8 @@
 
   function completePet(p) {
     petProgress = 0;
-    const napping = S.busy && S.busy.type === 'nap';
-    S.rec.pets += 1;
+    const napping = PET.busy && PET.busy.type === 'nap';
+    PET.rec.pets += 1;
     changeStats({ mood: 8 });
     addExp(4);
     if (S.petDay !== today()) { S.petDay = today(); S.petShells = 0; }
@@ -835,10 +1003,10 @@
     }
     burst('♥', 5);
     if (napping) {
-      say('"(새근새근... 미소)"', 2200);
+      say(V('"(새근새근... 미소)"', '"(쿨쿨... 헤헤)"'), 2200);
     } else {
       setFace('cheer', 1400);
-      say(pick(LINES.pet), 2500);
+      say(pick(L().pet), 2500);
     }
     renderAll();
     save(true);
@@ -846,9 +1014,9 @@
 
   function poke(p) {
     const now = Date.now();
-    if (S.busy && S.busy.type === 'hunt') { toast_('랏코는 지금 토벌 나가 있어요'); return; }
-    if (S.busy && S.busy.type === 'nap') {
-      say(pick(LINES.sleeping), 1800);
+    if (PET.busy && PET.busy.type === 'hunt') { toast_(`${CH().name}는 지금 토벌 나가 있어요`); return; }
+    if (PET.busy && PET.busy.type === 'nap') {
+      say(pick(L().sleeping), 1800);
       fx('z', p.x, p.y);
       return;
     }
@@ -861,14 +1029,14 @@
       pokeTimes = [];
       changeStats({ mood: -5 });
       setFace('hmm', 2500);
-      say(pick(LINES.pokeTooMuch), 2500);
+      say(pick(L().pokeTooMuch), 2500);
       fx('💢', p.x, p.y);
       renderStats();
       return;
     }
 
-    setFace(pick(['cheer', 'confident', 'expact', 'handshake', 'naruhodo']), 1200);
-    say(pick(LINES.poke), 1800);
+    setFace(pick(CH().pokeFaces), 1200);
+    say(pick(L().poke), 1800);
     fx(pick(['!', '♪', '♡']), p.x, p.y);
     if (now - lastPokeReward > 1500) {
       lastPokeReward = now;
@@ -905,18 +1073,18 @@
      돌보기 액션
      ====================================================================== */
   on('huntBtn', 'click', () => {
-    if (S.busy && S.busy.type === 'nap') { toast_('낮잠 자는 중이에요. 깨면 보내주세요'); return; }
+    if (PET.busy && PET.busy.type === 'nap') { toast_('낮잠 자는 중이에요. 깨면 보내주세요'); return; }
     openHuntSelect();
   });
 
   on('napBtn', 'click', () => {
-    if (S.busy) { toast_(S.busy.type === 'hunt' ? '토벌에서 돌아오면 재워주세요' : '이미 자고 있어요'); return; }
-    if (Date.now() < (S.napReady || 0)) { toast_(`아직 안 졸려요 · ${napWait()} 후 가능`); return; }
-    if (S.energy >= 90) { say('"아직 쌩쌩하다."', 2000); return; }
-    S.busy = { type: 'nap', start: Date.now(), end: Date.now() + NAP_MS };
-    S.napReady = Date.now() + NAP_MS + NAP_COOLDOWN_MS;
+    if (PET.busy) { toast_(PET.busy.type === 'hunt' ? '토벌에서 돌아오면 재워주세요' : '이미 자고 있어요'); return; }
+    if (Date.now() < (PET.napReady || 0)) { toast_(`아직 안 졸려요 · ${napWait()} 후 가능`); return; }
+    if (PET.energy >= 90) { say(V('"아직 쌩쌩하다."', '"아직 하나도 안 졸려!"'), 2000); return; }
+    PET.busy = { type: 'nap', start: Date.now(), end: Date.now() + NAP_MS };
+    PET.napReady = Date.now() + NAP_MS + NAP_COOLDOWN_MS;
     setFace('yawn', 1500);
-    say(pick(LINES.nap), 2000);
+    say(pick(L().nap), 2000);
     renderAll();
     save(true);
   });
@@ -928,38 +1096,38 @@
     const gift = dailyGift(S.streak);
     addShells(gift);
     setFace('handshake', 2000);
-    say(S.streak >= 3 ? `"${S.streak}일 연속이군. 성실한 제자다."` : '"오늘도 와줬군. 이건 용돈이다."', 3000);
+    say(S.streak >= 3 ? V(`"${S.streak}일 연속이군. 성실한 제자다."`, `"${S.streak}일 연속이야! 대단해~!"`) : V('"오늘도 와줬군. 이건 용돈이다."', '"오늘도 와줬구나! 이거 받아~"'), 3000);
     toast_(`출석 도장 쾅! 연속 ${S.streak}일 · 🐚 +${gift}`);
     renderAll();
     save(true);
   });
 
   on('talkBtn', 'click', () => {
-    if (S.busy && S.busy.type === 'hunt') { toast_('랏코는 지금 토벌 나가 있어요'); return; }
-    if (S.busy && S.busy.type === 'nap') { say(pick(LINES.sleeping), 2000); return; }
+    if (PET.busy && PET.busy.type === 'hunt') { toast_(`${CH().name}는 지금 토벌 나가 있어요`); return; }
+    if (PET.busy && PET.busy.type === 'nap') { say(pick(L().sleeping), 2000); return; }
     setFace(pick(['naruhodo', 'confident', 'nod']), 3000);
-    say(pick(LINES.talk), 4200);
+    say(pick(L().talk), 4200);
   });
 
   function finishBusyIfDone(now, silent) {
-    if (!S.busy || now < S.busy.end) return;
-    const b = S.busy;
-    S.busy = null;
-    if (b.type === 'hunt') finishHunt(silent);
-    else finishNap(silent);
-    renderAll();
-    save(true);
+    let changed = false;
+    Object.entries(S.pets).forEach(([ch, p]) => {
+      if (!p.busy || now < p.busy.end) return;
+      const b = p.busy;
+      p.busy = null;
+      changed = true;
+      const visible = !silent && ch === S.cur;
+      if (b.type === 'hunt') toast_(`${CHARS[ch].name}가 토벌에서 돌아왔어요`); // 예전 버전 세이브 처리
+      else finishNap(p, visible, ch);
+    });
+    if (changed) { renderAll(); save(true); }
   }
 
-  function finishHunt() {
-    // 예전 버전의 자동 토벌이 남아 있던 세이브: 보상 없이 귀환 처리
-    toast_('랏코가 토벌에서 돌아왔어요');
-  }
-
-  function finishNap(silent) {
-    S.energy = clamp(S.energy + NAP_ENERGY);
-    S.mood = clamp(S.mood + 3);
-    if (!silent) { setFace('nod', 2000); say('"...잘 잤다."', 2500); }
+  function finishNap(p, visible, ch) {
+    p.energy = clamp(p.energy + NAP_ENERGY);
+    p.mood = clamp(p.mood + 3);
+    if (visible) { setFace('nod', 2000); say(V('"...잘 잤다."', '"잘 잤다~! 개운해!"'), 2500); }
+    else if (ch !== S.cur) toast_(`${CHARS[ch].name}가 낮잠에서 깼어요 (기력 +${NAP_ENERGY})`);
   }
 
   /* ======================================================================
@@ -971,7 +1139,7 @@
     S.shells -= it.price;
     S.inv[id] = (S.inv[id] || 0) + 1;
     toast_(`${it.name} 구매! 가방에 넣었어요`);
-    if (!S.busy) { setFace('expact', 1500); say('"...그건 혹시 나를 위한 건가."', 2200); }
+    if (!PET.busy) { setFace('expact', 1500); say(V('"...그건 혹시 나를 위한 건가."', '"그거 나 주는 거야!? 맞지!?"'), 2200); }
     renderAll();
     save(true);
   }
@@ -984,7 +1152,7 @@
     S.bgs.push(id);
     S.bg = id;
     toast_(`배경 「${bg.name}」 구매 & 적용!`);
-    if (!S.busy) { setFace('cheer', 2000); say(id === 'parfait' ? '"여기가... 천국인가."' : '"오오... 좋은 곳이군."', 2500); }
+    if (!PET.busy) { setFace('cheer', 2000); say(id === 'parfait' ? V('"여기가... 천국인가."', '"파르페 가게다~! 사진 찍어야지!"') : V('"오오... 좋은 곳이군."', '"우와~ 여기 완전 좋다!"'), 2500); }
     renderAll();
     save(true);
   }
@@ -992,18 +1160,18 @@
   function feed(id) {
     const it = ITEMS[id];
     if (!S.inv[id]) return;
-    if (S.busy && S.busy.type === 'hunt') { toast_('토벌에서 돌아오면 줄 수 있어요'); return; }
-    if (S.busy && S.busy.type === 'nap') { toast_('자는 중엔 먹을 수 없어요'); return; }
+    if (PET.busy && PET.busy.type === 'hunt') { toast_('토벌에서 돌아오면 줄 수 있어요'); return; }
+    if (PET.busy && PET.busy.type === 'nap') { toast_('자는 중엔 먹을 수 없어요'); return; }
     const keys = Object.keys(it.eff).filter((k) => k !== 'exp');
     const allFull = keys.every((k) => S[k] >= 98);
-    if (allFull) { setFace('hmm', 1800); say(pick(LINES.full), 2200); return; }
+    if (allFull) { setFace('hmm', 1800); say(pick(L().full), 2200); return; }
     S.inv[id] -= 1;
     if (S.inv[id] <= 0) delete S.inv[id];
-    S.rec.fed += 1;
+    PET.rec.fed += 1;
     changeStats(it.eff);
     addExp(3);
     setFace('expact', 700);
-    setTimeout(() => { if (S) { setFace(it.face, 2200); say(it.line, 3200); } }, 700);
+    setTimeout(() => { if (S) { setFace(curChar() === 'hachi' ? (id === 'coffee' ? 'confident' : 'eat') : it.face, 2200); say(V(it.line, it.hline), 3200); } }, 700);
     burst(it.ico, 3);
     renderAll();
     save(true);
@@ -1100,24 +1268,28 @@
      옷 입히기
      ====================================================================== */
   function renderWear(fig, face) {
-    const A = ANCHORS[face] || ANCHORS.basic;
+    const anc = CH().anchors;
+    const fname = (CH().alias && CH().alias[face]) || face;
+    const A = anc[fname] || anc.basic;
     const ar = A.w / A.h;
     fig.style.setProperty('--ar', ar.toFixed(4));
     const layer = fig.querySelector('.acc-layer');
     layer.innerHTML = '';
     if (!S) return;
     ['face', 'head'].forEach((slot) => {
-      const id = S.wear[slot];
+      const id = PET.wear[slot];
       const c = id && CLOTHES[id];
       if (!c) return;
+      if ((slot === 'head' && A.noHead) || (slot === 'face' && A.noFace) || A.ex === undefined) return; // 의상 컷은 숨김
       const p = c.place;
+      const hk = CH().headK || 1;
       const el = document.createElement('div');
       el.className = `acc acc-${slot}`;
       el.innerHTML = c.svg;
       if (slot === 'head') {
-        el.style.width = `${p.w * A.hw}%`;
-        el.style.left = `${A.hx + p.dx * A.hw}%`;
-        el.style.top = `${A.top + p.by * A.hw * ar}%`;
+        el.style.width = `${p.w * A.hw * hk}%`;
+        el.style.left = `${A.hx + p.dx * A.hw * hk}%`;
+        el.style.top = `${A.top + p.by * A.hw * hk * ar * (CH().byK || 1)}%`;
         el.style.transform = `translate(-50%, -100%) rotate(${p.rot || 0}deg)`;
         el.style.transformOrigin = '50% 100%';
       } else {
@@ -1143,11 +1315,11 @@
   function wear(id, silentToast) {
     const c = CLOTHES[id];
     if (!c || !S.clothes.includes(id)) return;
-    S.wear[c.slot] = id;
+    PET.wear[c.slot] = id;
     renderWear(rakkoFigure, currentFace);
-    if (!(S.busy && S.busy.type === 'hunt')) {
-      if (!(S.busy && S.busy.type === 'nap')) setFace(pick(['cheer', 'confident', 'handshake']), 2200);
-      say(pick(['"...어울리나?"', '"흠. 나쁘지 않군."', '"이걸 쓰고 토벌을 나가도 되겠군."', '"(거울을 힐끔 본다)"']), 2600);
+    if (!(PET.busy && PET.busy.type === 'hunt')) {
+      if (!(PET.busy && PET.busy.type === 'nap')) setFace(pick(['cheer', 'confident', 'handshake']), 2200);
+      say(pick(V(['"...어울리나?"', '"흠. 나쁘지 않군."', '"이걸 쓰고 토벌을 나가도 되겠군."', '"(거울을 힐끔 본다)"'], ['"어때? 귀여워?"', '"사진 찍어줘! 찰칵!"', '"이거 완전 마음에 들어~"', '"(빙글 돌아본다)"'])), 2600);
     }
     if (!silentToast) toast_(`${c.name} 착용!`);
     renderAll();
@@ -1155,7 +1327,7 @@
   }
 
   function takeOff(slot) {
-    S.wear[slot] = null;
+    PET.wear[slot] = null;
     renderWear(rakkoFigure, currentFace);
     renderAll();
     save(true);
@@ -1163,7 +1335,7 @@
 
   function renderCloset() {
     $('wearSlots').innerHTML = Object.entries(SLOTS).map(([slot, label]) => {
-      const c = S.wear[slot] && CLOTHES[S.wear[slot]];
+      const c = PET.wear[slot] && CLOTHES[PET.wear[slot]];
       return `
         <div class="wear-slot">
           <div class="item-ico">${c ? c.svg : '<span style="font-size:1rem;color:#c9b8a6">—</span>'}</div>
@@ -1182,7 +1354,7 @@
     }
     list.innerHTML = S.clothes.filter((id) => CLOTHES[id]).map((id) => {
       const c = CLOTHES[id];
-      const on = S.wear[c.slot] === id;
+      const on = PET.wear[c.slot] === id;
       return `
         <div class="item-row">
           <div class="item-ico">${c.svg}</div>
@@ -1213,19 +1385,24 @@
   let quizAns = [];
 
   function quizLeft() {
-    if (S.quizDay !== today()) return QUIZ_DAILY;
-    return Math.max(0, QUIZ_DAILY - S.quizCount);
+    if (PET.quizDay !== today()) return QUIZ_DAILY;
+    return Math.max(0, QUIZ_DAILY - PET.quizCount);
   }
 
   function renderQuizInfo() {
     const left = quizLeft();
+    const set = (id, t) => { const el = $(id); if (el) el.textContent = t; };
+    set('quizEntryTitle', CH().quizTitle);
+    set('quizWatch', CH().quizWatch);
+    set('gradeLabel', CH().quizLabel);
+    const tipIcon = $('quizTipIcon'); if (tipIcon) tipIcon.src = IMG('basic');
     $('quizInfo').textContent = left > 0
-      ? `정답당 🐚${QUIZ_REWARD_PER} · 만점 🐚+${QUIZ_PERFECT_BONUS} · 오늘 보상 ${left}/${QUIZ_DAILY}회 · 최고 ${S.quizBest}점`
-      : `오늘 보상은 다 받았어요 · 연습은 계속 가능 · 최고 ${S.quizBest}점`;
+      ? `정답당 🐚${QUIZ_REWARD_PER} · 만점 🐚+${QUIZ_PERFECT_BONUS} · 오늘 보상 ${left}/${QUIZ_DAILY}회 · 최고 ${PET.quizBest}점`
+      : `오늘 보상은 다 받았어요 · 연습은 계속 가능 · 최고 ${PET.quizBest}점`;
   }
 
   function startQuiz() {
-    quizQs = QUESTIONS.map((q) => {
+    quizQs = CH().quiz.map((q) => {
       const correct = q.options[q.answer];
       const opts = [...q.options].sort(() => Math.random() - 0.5);
       return { ...q, options: opts, answer: opts.indexOf(correct) };
@@ -1240,7 +1417,7 @@
   on('retryBtn', 'click', startQuiz);
   on('quitBtn', 'click', () => {
     showScreen(gameScreen);
-    if (!S.busy) { setFace('hmm', 2000); say('"...시험 도중에 나가는 건가."', 2500); }
+    if (!PET.busy) { setFace('hmm', 2000); say(V('"...시험 도중에 나가는 건가."', '"어? 시험 그만두는 거야?"'), 2500); }
   });
   on('backBtn', 'click', () => {
     showScreen(gameScreen);
@@ -1286,28 +1463,34 @@
     const score = Math.round((correct / total) * 100);
 
     let title, comment, face;
-    if (score === 100) { title = '명예 랏코 마스터'; face = 'cheer'; comment = '"너... 나에 대해 이렇게나 깊이 알고 있었던 건가! (눈물 찔끔 흘리며 파르페를 사준다)"'; }
+    if (curChar() === 'hachi') {
+      if (score === 100) { title = '명예 하치와레 마스터'; face = 'cheer'; comment = '"나보다 나를 더 잘 아는 거라는 거야!? 기념으로 같이 사진 찍자! 찰칵!"'; }
+      else if (score >= 84) { title = '동굴 초대 손님'; face = 'handshake'; comment = '"우와~ 거의 다 맞혔어! 오늘 우리 동굴에서 주먹밥 먹고 가!"'; }
+      else if (score >= 67) { title = '풀뽑기 동료'; face = 'nod'; comment = '"꽤 아는데? 다음엔 내 노래 제목도 꼭 기억해 줘~"'; }
+      else if (score >= 42) { title = '하치와레 입문자'; face = 'naruhodo'; comment = '"음~ 반쯤 맞혔네! 괜찮아, 어떻게든 되어라~!"'; }
+      else { title = '처음 보는 먼작귀'; face = 'hmm'; comment = '"으앙... 나 하치와레야! 이제부터 친해지면 되지 뭐!"'; }
+    } else if (score === 100) { title = '명예 랏코 마스터'; face = 'cheer'; comment = '"너... 나에 대해 이렇게나 깊이 알고 있었던 건가! (눈물 찔끔 흘리며 파르페를 사준다)"'; }
     else if (score >= 84) { title = '수석 제자 (하치와레급)'; face = 'confident'; comment = '"훌륭하다. 나와 함께 망토를 두르고 토벌 특훈을 가자꾸나. 딸기 파르페도 사주마."'; }
     else if (score >= 67) { title = '우등 먼작귀'; face = 'nod'; comment = '"기초는 훌륭하군. 하지만 냉탕 참기와 진정한 파르페의 맛까지 꿰뚫어야 스승의 길이다."'; }
     else if (score >= 42) { title = '견습 토벌대원'; face = 'naruhodo'; comment = '"혹시 나를 쿠리만쥬(수달)와 헷갈린 것은 아니겠지...? 조금 더 정진하도록 해라."'; }
     else { title = '모몽가급 관심도'; face = 'hmm'; comment = '"내가 가르침에 무언가 잘못이라도 한 것인가...? (동상 앞에서 홀로 고뇌에 빠진다)"'; }
 
     // 보상
-    if (S.quizDay !== today()) { S.quizDay = today(); S.quizCount = 0; }
+    if (PET.quizDay !== today()) { PET.quizDay = today(); PET.quizCount = 0; }
     let reward = 0;
     let rewardMsg;
-    if (S.quizCount < QUIZ_DAILY) {
-      S.quizCount += 1;
+    if (PET.quizCount < QUIZ_DAILY) {
+      PET.quizCount += 1;
       reward = correct * QUIZ_REWARD_PER + (score === 100 ? QUIZ_PERFECT_BONUS : 0);
       addShells(reward);
       addExp(correct);
-      if (score >= 67) S.mood = clamp(S.mood + 5);
-      rewardMsg = `오늘 남은 보상 ${QUIZ_DAILY - S.quizCount}/${QUIZ_DAILY}회 · 친밀도 +${correct}`;
+      if (score >= 67) PET.mood = clamp(PET.mood + 5);
+      rewardMsg = `오늘 남은 보상 ${QUIZ_DAILY - PET.quizCount}/${QUIZ_DAILY}회 · 친밀도 +${correct}`;
     } else {
       rewardMsg = '오늘 보상은 다 받았어요. 내일 다시 도전!';
     }
-    const isBest = score > S.quizBest;
-    S.quizBest = Math.max(S.quizBest, score);
+    const isBest = score > PET.quizBest;
+    PET.quizBest = Math.max(PET.quizBest, score);
     save(true);
 
     const fig = $('resultFigure');
@@ -1317,7 +1500,7 @@
     $('gradeTitle').textContent = title;
     $('gradeComment').textContent = comment;
     $('correctCount').textContent = `${correct} / ${total}`;
-    $('bestScore').textContent = `${S.quizBest}점${isBest && score > 0 ? ' 🆕' : ''}`;
+    $('bestScore').textContent = `${PET.quizBest}점${isBest && score > 0 ? ' 🆕' : ''}`;
     $('quizReward').textContent = reward ? `🐚 +${reward}` : '—';
     $('rewardLine').textContent = rewardMsg;
     renderReview();
@@ -1326,9 +1509,9 @@
     // 돌아갔을 때 랏코 반응
     faceUntil = 0;
     setTimeout(() => {
-      if (!S || S.busy) return;
+      if (!S || PET.busy) return;
       setFace(face, 3000);
-      say(score >= 84 ? '"모의고사 결과, 잘 봤다. 자랑스럽군."' : score >= 42 ? '"다음엔 더 잘할 수 있을 거다."' : '"...같이 복습하자꾸나."', 3500);
+      say(score >= 84 ? V('"모의고사 결과, 잘 봤다. 자랑스럽군."', '"모의고사 대박이었어! 최고야~"') : score >= 42 ? V('"다음엔 더 잘할 수 있을 거다."', '"다음엔 더 잘할 수 있어!"') : V('"...같이 복습하자꾸나."', '"같이 공부하자~!"'), 3500);
     }, 50);
   }
 
@@ -1388,7 +1571,7 @@
   let H = null;
   let rafId = 0;
 
-  function huntsToday() { return S.huntDay === today() ? S.huntCount : 0; }
+  function huntsToday() { return PET.huntDay === today() ? PET.huntCount : 0; }
 
   function openHuntSelect() {
     showScreen(huntScreen);
@@ -1397,14 +1580,14 @@
     huntResult.hidden = true;
     $('huntTitle').textContent = '상대를 고르세요';
     $('huntHearts').innerHTML = '';
-    $('huntEnergyNow').textContent = Math.round(S.energy);
-    $('huntHungerNow').textContent = Math.round(S.hunger);
+    $('huntEnergyNow').textContent = Math.round(PET.energy);
+    $('huntHungerNow').textContent = Math.round(PET.hunger);
     const tired = huntsToday() >= HUNT_DAILY_FULL;
     $('foeList').innerHTML = Object.entries(FOES).map(([id, f]) => {
       let why = '';
-      if (S.lv < f.minLv) why = `Lv.${f.minLv}부터`;
-      else if (S.energy < f.energy) why = '기력 부족';
-      else if (S.hunger < f.hunger) why = '배고픔';
+      if (PET.lv < f.minLv) why = `Lv.${f.minLv}부터`;
+      else if (PET.energy < f.energy) why = '기력 부족';
+      else if (PET.hunger < f.hunger) why = '배고픔';
       const r = tired ? f.reward.map((v) => Math.ceil(v / 2)) : f.reward;
       return `
         <div class="item-row foe-row">
@@ -1433,12 +1616,12 @@
 
   function startHunt(id) {
     const f = FOES[id];
-    if (S.energy < f.energy || S.hunger < f.hunger) return;
-    S.energy = clamp(S.energy - f.energy);
-    S.hunger = clamp(S.hunger - f.hunger);
+    if (PET.energy < f.energy || PET.hunger < f.hunger) return;
+    PET.energy = clamp(PET.energy - f.energy);
+    PET.hunger = clamp(PET.hunger - f.hunger);
     save(true);
 
-    const moodK = 0.85 + (S.mood / 100) * 0.3; // 기분 0 → 0.85배, 100 → 1.15배
+    const moodK = 0.85 + (PET.mood / 100) * 0.3; // 기분 0 → 0.85배, 100 → 1.15배
     H = {
       id, f, hp: f.hp, hearts: 3, combo: 0, maxCombo: 0, perfects: 0,
       pos: Math.random(), dir: Math.random() < 0.5 ? 1 : -1,
@@ -1593,19 +1776,19 @@
   function endHunt(win) {
     H.over = true;
     cancelAnimationFrame(rafId);
-    if (S.huntDay !== today()) { S.huntDay = today(); S.huntCount = 0; }
-    S.huntCount += 1;
-    S.rec.hunts += 1;
-    const tired = S.huntCount > HUNT_DAILY_FULL;
+    if (PET.huntDay !== today()) { PET.huntDay = today(); PET.huntCount = 0; }
+    PET.huntCount += 1;
+    PET.rec.hunts += 1;
+    const tired = PET.huntCount > HUNT_DAILY_FULL;
     const f = H.f;
     let reward, extra = '';
     if (win) {
-      S.wins = (S.wins || 0) + 1;
+      PET.wins = (PET.wins || 0) + 1;
       reward = rand(f.reward[0], f.reward[1]) + H.perfects;
       if (H.hearts === 3) reward += 2;
       if (tired) reward = Math.ceil(reward / 2);
       addExp(f.exp);
-      S.mood = clamp(S.mood + 5);
+      PET.mood = clamp(PET.mood + 5);
       if (Math.random() < f.drop[1]) {
         S.inv[f.drop[0]] = (S.inv[f.drop[0]] || 0) + 1;
         extra = `전리품: ${ITEMS[f.drop[0]].ico} ${ITEMS[f.drop[0]].name} (가방에 넣었어요)`;
@@ -1613,7 +1796,7 @@
     } else {
       reward = tired ? 1 : 2;
       addExp(2);
-      S.mood = clamp(S.mood - 12);
+      PET.mood = clamp(PET.mood - 12);
     }
     addShells(reward);
     save(true);
@@ -1631,8 +1814,8 @@
       renderWear(fig, face);
       $('hrTitle').textContent = win ? (H.hearts === 3 ? '완벽한 토벌!' : '토벌 성공!') : '토벌 실패...';
       $('hrLine').textContent = win
-        ? (H.perfects >= 3 ? '"...이게 토벌 랭킹 1위의 검이다."' : '"...토벌 완료. 돌아가서 쉬자꾸나."')
-        : '"...나도 아직 멀었군. 다음엔 지지 않는다."';
+        ? (H.perfects >= 3 ? V('"...이게 토벌 랭킹 1위의 검이다."', '"사스마타 완전 잘 먹혔어! 선생님한테 자랑해야지!"') : V('"...토벌 완료. 돌아가서 쉬자꾸나."', '"토벌 성공~! 보수 받으러 가자!"'))
+        : V('"...나도 아직 멀었군. 다음엔 지지 않는다."', '"으앙... 졌다. 그래도 어떻게든 되겠지!"');
       $('hrPerfect').textContent = H.perfects;
       $('hrCombo').textContent = H.maxCombo;
       $('hrReward').textContent = `🐚 +${reward}`;
@@ -1642,7 +1825,7 @@
       if (extra) notes.push(extra);
       $('hrExtra').textContent = notes.join(' · ');
       setFace(win ? 'confident' : 'naruhodo', 4000);
-      say(win ? `"토벌 다녀왔다. 조개 ${reward}개다."` : '"...오늘은 운이 없었군."', 4000);
+      say(win ? V(`"토벌 다녀왔다. 조개 ${reward}개다."`, `"토벌 다녀왔어! 조개 ${reward}개!"`) : V('"...오늘은 운이 없었군."', '"오늘은 좀 무서웠어..."'), 4000);
     }, 900);
   }
 
@@ -1653,7 +1836,7 @@
   const DRIVE_SEC = 45;
   const DRIVE_COOLDOWN_MS = 0; // 쿨타임 없음 (무제한)
   const carImg = new Image();
-  carImg.src = IMG('car');
+  carImg.src = IMG('car', 'rakko');
   const dc = $('driveCanvas');
   const dctx = dc.getContext('2d');
   let D = null;
@@ -1661,26 +1844,29 @@
   const keys = { ArrowLeft: false, ArrowRight: false };
 
   function driveWait() {
-    const ms = Math.max(0, (S.driveReady || 0) - Date.now());
+    const ms = Math.max(0, (PET.driveReady || 0) - Date.now());
     const m = Math.floor(ms / 60000), s = Math.ceil((ms % 60000) / 1000);
     return m > 0 ? `${m}분 ${s}초` : `${s}초`;
   }
   function renderDriveBtn() {
     if (!S) return;
-    const cd = Date.now() < (S.driveReady || 0);
-    $('driveBtn').disabled = !!S.busy || cd;
-    $('driveSub').textContent = S.busy && S.busy.type === 'nap' ? '자는 중' : cd ? `${driveWait()} 후 가능` : '기력 +5~10';
+    const cd = Date.now() < (PET.driveReady || 0);
+    $('driveBtn').disabled = !!PET.busy || cd;
+    $('driveSub').textContent = PET.busy && PET.busy.type === 'nap' ? '자는 중' : cd ? `${driveWait()} 후 가능` : '기력 +5~10';
   }
 
   on('driveBtn', 'click', () => {
-    if (S.busy && S.busy.type === 'nap') { toast_('낮잠 자는 중이에요'); return; }
-    if (Date.now() < (S.driveReady || 0)) { toast_(`차가 쉬는 중이에요 · ${driveWait()} 후 가능`); return; }
+    if (PET.busy && PET.busy.type === 'nap') { toast_('낮잠 자는 중이에요'); return; }
+    if (Date.now() < (PET.driveReady || 0)) { toast_(`차가 쉬는 중이에요 · ${driveWait()} 후 가능`); return; }
     showScreen(driveScreen);
     $('driveIntro').hidden = false;
     $('drivePlay').hidden = true;
     $('driveResult').hidden = true;
     $('driveHearts').innerHTML = '';
-    $('driveTitle').textContent = '토코토코 드라이브';
+    $('driveTitle').textContent = V('토코토코 드라이브', '분홍 자동차 드라이브');
+    $('driveIntroCar').src = IMG('car');
+    $('driveResultCar').src = IMG('car');
+    $('driveIntroLine').textContent = V('"드라이브다... 안전 운전하겠다."', '"분홍 자동차 출발~! 꽉 잡아!"');
   });
   on('driveCancel', 'click', () => { showScreen(gameScreen); renderAll(); });
   on('driveBack', 'click', () => { showScreen(gameScreen); renderAll(); });
@@ -1697,8 +1883,9 @@
   }
 
   function startDrive() {
-    if (Date.now() < (S.driveReady || 0)) return;
-    S.driveReady = Date.now() + DRIVE_COOLDOWN_MS;
+    if (Date.now() < (PET.driveReady || 0)) return;
+    PET.driveReady = Date.now() + DRIVE_COOLDOWN_MS;
+    carImg.src = IMG('car');
     save(true);
     $('driveIntro').hidden = true;
     $('driveResult').hidden = true;
@@ -1824,7 +2011,7 @@
     D.objs = D.objs.filter((o) => o.x > -100);
 
     // 충돌
-    const carX = D.w * 0.14, carW = 118;
+    const carX = D.w * 0.14, carW = CH().carW;
     const curLane = D.lanes.reduce((best, y, i) => (Math.abs(y - D.carY) < Math.abs(D.lanes[best] - D.carY) ? i : best), 0);
     D.objs.forEach((o) => {
       if (o.hit || o.lane !== curLane) return;
@@ -1840,7 +2027,7 @@
       } else if (D.inv <= 0) {
         D.hearts -= 1;
         D.crashes += 1;
-        S.mood = clamp(S.mood - 6); // 충돌할 때마다 바로 기분 -6
+        PET.mood = clamp(PET.mood - 6); // 충돌할 때마다 바로 기분 -6
         D.inv = 1.0;
         D.speed = 0.4;
         floatText('쿵! 기분 -6', carX + carW / 2, D.carY - 90, '#c62828');
@@ -1954,7 +2141,7 @@
 
   function drawCar() {
     const g = dctx;
-    const carW = 118, carH = carW * (carImg.naturalHeight || 212) / (carImg.naturalWidth || 255);
+    const carW = CH().carW, carH = carW * (carImg.naturalHeight || 212) / (carImg.naturalWidth || 255);
     const x = D.w * 0.14;
     const bob = Math.abs(Math.sin(D.t * 16)) * 2.2 * D.speed; // 토코토코
     if (D.inv > 0 && Math.floor(D.inv * 10) % 2 === 0) return; // 부딪힌 뒤 깜빡임
@@ -1974,9 +2161,9 @@
     keys.ArrowLeft = keys.ArrowRight = false;
     const energy = rand(5, 10);
     const moodUp = Math.min(10, D.splashes);
-    S.energy = clamp(S.energy + energy);
-    S.mood = clamp(S.mood + moodUp);
-    S.drives = (S.drives || 0) + 1;
+    PET.energy = clamp(PET.energy + energy);
+    PET.mood = clamp(PET.mood + moodUp);
+    PET.drives = (PET.drives || 0) + 1;
     addExp(3);
     save(true);
     const crashedOut = D.hearts <= 0;
@@ -1985,16 +2172,45 @@
       $('driveResult').hidden = false;
       $('driveTitle').textContent = crashedOut ? '견인 당했다...' : '드라이브 끝!';
       $('drTitle').textContent = crashedOut ? '쾅쾅쾅... 견인 당했다' : D.splashes >= 8 ? '흙탕물 드라이브 최고!' : '드라이브 끝!';
-      $('drLine').textContent = crashedOut ? '"...운전 연습이 더 필요하군."'
-        : D.splashes >= 8 ? '"흙탕물을 가르는 이 느낌... 영상보다 좋군."'
-        : '"...좋은 드라이브였다. 기운이 난다."';
+      $('drLine').textContent = crashedOut ? V('"...운전 연습이 더 필요하군."', '"으앙... 차가 쿵쿵했어..."')
+        : D.splashes >= 8 ? V('"흙탕물을 가르는 이 느낌... 영상보다 좋군."', '"첨벙첨벙 완전 재밌다~!"')
+        : V('"...좋은 드라이브였다. 기운이 난다."', '"드라이브 최고! 힘이 난다~"');
       $('drDist').textContent = `${D.dist.toFixed(1)}km`;
       $('drSplash').textContent = D.splashes;
       $('drEnergy').textContent = `+${energy}`;
       $('drExtra').textContent = `기분 ${moodUp - D.crashes * 6 >= 0 ? '+' : ''}${moodUp - D.crashes * 6} (충돌 ${D.crashes}번 × -6) · 친밀도 +3`;
       setFace(crashedOut ? 'naruhodo' : 'cheer', 3500);
-      say(crashedOut ? '"...차는 무사하다. 아마도."' : `"드라이브 다녀왔다. 기력이 ${energy} 찼다."`, 4000);
+      say(crashedOut ? V('"...차는 무사하다. 아마도."', '"차 괜찮겠지...? 어떻게든 되어라~"') : V(`"드라이브 다녀왔다. 기력이 ${energy} 찼다."`, `"드라이브 다녀왔어! 기력 ${energy} 충전!"`), 4000);
     }, crashedOut ? 700 : 300);
+  }
+
+  /* ======================================================================
+     캐릭터 전환 (랏코 ↔ 하치와레)
+     ====================================================================== */
+  function switchChar(ch) {
+    if (!S || !CHARS[ch] || S.cur === ch) return;
+    S.cur = ch;
+    syncPet();
+    currentFace = '';
+    faceUntil = 0;
+    petProgress = 0;
+    updatePetGauge();
+    renderAll();
+    if (PET.busy && PET.busy.type === 'nap') say(pick(L().sleeping), 2500);
+    else { setFace('handshake', 2200); say(pick(L().greetBack), 3000); }
+    save(true);
+  }
+  document.querySelectorAll('.char-tab').forEach((b) => b.addEventListener('click', () => switchChar(b.dataset.char)));
+
+  function renderCharTabs() {
+    document.querySelectorAll('.char-tab').forEach((b) => {
+      const ch = b.dataset.char;
+      const p = S.pets[ch];
+      b.classList.toggle('active', ch === S.cur);
+      const alert = b.querySelector('.char-alert');
+      const need = p && (p.hunger < 25 || p.mood < 25 || p.energy < 20);
+      if (alert) { alert.hidden = !need || ch === S.cur; alert.title = need ? '돌봐줘야 해요' : ''; }
+    });
   }
 
   /* 탭 */
@@ -2010,7 +2226,7 @@
      렌더링
      ====================================================================== */
   function renderStats() {
-    [['hunger', S.hunger], ['mood', S.mood], ['energy', S.energy]].forEach(([k, v]) => {
+    [['hunger', PET.hunger], ['mood', PET.mood], ['energy', PET.energy]].forEach(([k, v]) => {
       const r = Math.round(v);
       const val = $(`${k}Val`);
       val.textContent = r;
@@ -2023,31 +2239,31 @@
   function renderNapBtn() {
     if (!S) return;
     const btn = $('napBtn'), sub = $('napSub');
-    const cd = Date.now() < (S.napReady || 0);
-    btn.disabled = !!S.busy || cd;
-    sub.textContent = S.busy && S.busy.type === 'nap' ? '쿨쿨 자는 중' : cd ? `${napWait()} 후 가능` : `1분 · 기력 +${NAP_ENERGY}`;
+    const cd = Date.now() < (PET.napReady || 0);
+    btn.disabled = !!PET.busy || cd;
+    sub.textContent = PET.busy && PET.busy.type === 'nap' ? '쿨쿨 자는 중' : cd ? `${napWait()} 후 가능` : `1분 · 기력 +${NAP_ENERGY}`;
   }
 
   function renderBusy(now) {
-    if (!S.busy) { busyBanner.hidden = true; return; }
+    if (!PET.busy) { busyBanner.hidden = true; return; }
     busyBanner.hidden = false;
-    const total = S.busy.end - S.busy.start;
-    const left = Math.max(0, S.busy.end - now);
+    const total = PET.busy.end - PET.busy.start;
+    const left = Math.max(0, PET.busy.end - now);
     const pct = clamp(((total - left) / total) * 100);
     busyFill.style.width = `${pct}%`;
     const sec = Math.ceil(left / 1000);
-    busyLabel.textContent = S.busy.type === 'hunt' ? `⚔️ 토벌 나감 · ${sec}초 후 귀환` : `💤 낮잠 중 · ${sec}초 후 기상`;
+    busyLabel.textContent = PET.busy.type === 'hunt' ? `⚔️ 토벌 나감 · ${sec}초 후 귀환` : `💤 낮잠 중 · ${sec}초 후 기상`;
   }
 
   function renderAll() {
     if (!S) return;
     renderStats();
     renderBusy(Date.now());
-    $('lvBadge').textContent = `Lv.${S.lv}`;
-    $('lvTitle').textContent = titleOf(S.lv);
-    const need = expNeed(S.lv);
-    $('expFill').style.width = `${(S.exp / need) * 100}%`;
-    $('expText').textContent = `친밀도 ${S.exp} / ${need}`;
+    $('lvBadge').textContent = `Lv.${PET.lv}`;
+    $('lvTitle').textContent = titleOf(PET.lv);
+    const need = expNeed(PET.lv);
+    $('expFill').style.width = `${(PET.exp / need) * 100}%`;
+    $('expText').textContent = `친밀도 ${PET.exp} / ${need}`;
 
     room.className = `room bg-${S.bg}`;
 
@@ -2055,13 +2271,13 @@
     $('dailyBtn').disabled = doneToday;
     const nextStreak = S.daily === dayKey(-1) ? (S.streak || 0) + 1 : 1;
     $('dailySub').textContent = doneToday ? `연속 ${S.streak}일째 · 내일 또 받아요` : `연속 ${nextStreak}일째 · 🐚 +${dailyGift(nextStreak)}`;
-    $('huntBtn').disabled = !!S.busy;
+    $('huntBtn').disabled = !!PET.busy;
     renderNapBtn();
     renderDriveBtn();
 
-    $('recHunts').textContent = S.rec.hunts;
-    $('recPets').textContent = S.rec.pets;
-    $('recFed').textContent = S.rec.fed;
+    $('recHunts').textContent = PET.rec.hunts;
+    $('recPets').textContent = PET.rec.pets;
+    $('recFed').textContent = PET.rec.fed;
 
     const bagN = Object.values(S.inv).reduce((a, b) => a + b, 0);
     const bc = $('bagCount');
@@ -2072,6 +2288,7 @@
     renderBag();
     renderCloset();
     renderQuizInfo();
+    renderCharTabs();
   }
 
   /* 토스트 */
@@ -2094,7 +2311,7 @@
 
   /* 새로고침 시 세션 유지 */
   const metaStore = document.getElementById('storeMode');
-  if (metaStore) metaStore.textContent = CLOUD ? '어느 기기에서든 같은 랏코' : '이 브라우저에 저장돼요';
+  if (metaStore) metaStore.textContent = CLOUD ? '어느 기기에서든 같은 친구들' : '이 브라우저에 저장돼요';
   if (CLOUD) cloudInit();
 
   (async function resume() {

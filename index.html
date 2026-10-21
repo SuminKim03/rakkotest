@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-ver="20261021a">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261020k">
+  <link rel="stylesheet" href="style.css?v=20261021a">
 </head>
 <body>
 
@@ -34,13 +34,14 @@
       </div>
 
       <h1 class="main-title">
-        <span class="sub-lead">토벌 랭킹 1위 참스승님과 함께</span>
+        <span class="sub-lead">토벌 랭킹 1위 참스승님 &amp; 하치와레와 함께</span>
         랏코 키우기
       </h1>
 
       <div class="rakko-avatar-card">
         <div class="avatar-image-wrap">
           <img src="rakkopng/web/handshake.webp" alt="악수를 청하는 랏코" class="rakko-main-img">
+          <img src="hachipng/web/handshake.webp" alt="응원하는 하치와레" class="rakko-main-img hachi-login-img">
         </div>
         <p id="loginQuote" class="avatar-quote">"...왔나. 암호를 대거라."</p>
       </div>
@@ -55,9 +56,9 @@
       </form>
 
       <div id="newAccountBox" class="new-account-box" hidden>
-        <p class="new-account-text">처음 보는 비밀번호예요.<br><strong>이 비밀번호로 새 랏코를 맞이할까요?</strong></p>
+        <p class="new-account-text">처음 보는 비밀번호예요.<br><strong>이 비밀번호로 랏코와 하치와레를 맞이할까요?</strong></p>
         <div class="row-actions">
-          <button id="newAccountYes" type="button" class="btn-primary btn-sm">새 랏코 맞이하기</button>
+          <button id="newAccountYes" type="button" class="btn-primary btn-sm">새로 맞이하기</button>
           <button id="newAccountNo" type="button" class="btn-secondary btn-sm">다시 입력</button>
         </div>
       </div>
@@ -71,6 +72,11 @@
 
     <!-- 2. 키우기 화면 -->
     <section id="gameScreen" class="screen">
+      <div class="char-switch" role="tablist" aria-label="캐릭터 선택">
+        <button type="button" class="char-tab active" data-char="rakko"><img src="rakkopng/web/basic.webp" alt=""><span>랏코</span><i class="char-alert" hidden>!</i></button>
+        <button type="button" class="char-tab" data-char="hachi"><img src="hachipng/web/basic.webp" alt=""><span>하치와레</span><i class="char-alert" hidden>!</i></button>
+      </div>
+
       <div class="top-bar">
         <div class="lv-box">
           <span id="lvBadge" class="q-badge">Lv.1</span>
@@ -140,7 +146,7 @@
           <span class="qe-ico">📝</span>
           <span class="qe-body">
             <span class="qe-tag">MINI CONTENT</span>
-            <span class="qe-title">제 1회 전국 랏코 박사 모의고사</span>
+            <span id="quizEntryTitle" class="qe-title">제 1회 전국 랏코 박사 모의고사</span>
             <span id="quizInfo" class="qe-sub">12문항 · 정답당 🐚3 · 만점 보너스 🐚20</span>
           </span>
           <span class="qe-arrow">→</span>
@@ -283,11 +289,11 @@
       </div>
 
       <div id="driveIntro" class="drive-panel">
-        <img src="rakkopng/web/car.webp" alt="차를 운전하는 랏코" class="drive-car-img">
-        <p class="bubble-text">"드라이브다... 안전 운전하겠다."</p>
+        <img id="driveIntroCar" src="rakkopng/web/car.webp" alt="차를 운전하는 모습" class="drive-car-img">
+        <p id="driveIntroLine" class="bubble-text">"드라이브다... 안전 운전하겠다."</p>
         <ul class="drive-help">
           <li><b>↑ ↓</b> 또는 <b>W S</b> 차선 바꾸기 · <b>← →</b> 또는 <b>A D</b> 느리게 / 빠르게</li>
-          <li>🟤 <b>흙탕물</b>을 지나가면 첨벙! 랏코 기분이 좋아져요</li>
+          <li>🟤 <b>흙탕물</b>을 지나가면 첨벙! 기분이 좋아져요</li>
           <li>🚧 라바콘·돌에 부딪히면 하트 -1 · 기분 -6 (3번이면 끝)</li>
           <li>45초 드라이브 후 <b>기력 +5~10</b> · 몇 번이든 OK</li>
         </ul>
@@ -317,7 +323,7 @@
       </div>
 
       <div id="driveResult" class="hunt-result" hidden>
-        <img src="rakkopng/web/car.webp" alt="" class="drive-car-img">
+        <img id="driveResultCar" src="rakkopng/web/car.webp" alt="" class="drive-car-img">
         <h3 id="drTitle" class="grade-title">드라이브 끝!</h3>
         <p id="drLine" class="bubble-text hr-line">"...좋은 드라이브였다."</p>
         <div class="report-stats">
@@ -339,8 +345,8 @@
         <div class="progress-info">
           <span id="questionStep" class="progress-step">문제 1 / 12</span>
           <span class="progress-tip">
-            <img src="rakko_icon.webp" class="tip-icon" alt="">
-            랏코 선생님이 지켜보고 계십니다
+            <img id="quizTipIcon" src="rakkopng/web/basic.webp" class="tip-icon" alt="">
+            <span id="quizWatch">랏코 선생님이 지켜보고 계십니다</span>
           </span>
         </div>
         <div class="progress-track">
@@ -383,7 +389,7 @@
         </div>
 
         <div class="grade-title-box">
-          <span class="grade-label">당신의 랏코 칭호</span>
+          <span id="gradeLabel" class="grade-label">당신의 랏코 칭호</span>
           <h3 id="gradeTitle" class="grade-title">수석 제자</h3>
         </div>
 
@@ -409,7 +415,7 @@
       </div>
 
       <div class="result-actions">
-        <button id="backBtn" type="button" class="btn-primary"><span>랏코에게 돌아가기</span></button>
+        <button id="backBtn" type="button" class="btn-primary"><span>숙소로 돌아가기</span></button>
         <button id="retryBtn" type="button" class="btn-secondary"><span>다시 풀기</span></button>
       </div>
 
@@ -423,7 +429,7 @@
 
   <div id="toast" class="toast-message"></div>
 
-  <script src="firebase-config.js?v=20261020k"></script>
-  <script src="script.js?v=20261020k"></script>
+  <script src="firebase-config.js?v=20261021a"></script>
+  <script src="script.js?v=20261021a"></script>
 </body>
 </html>
